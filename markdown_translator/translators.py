@@ -17,7 +17,7 @@ def translate_deepl(html_content, lang_to, lang_from=None):
         "text": html_content,
         "source_lang": lang_from,
         "target_lang": lang_to,
-        "tag_handling": "xml",
+        "tag_handling": "html",
     }
     response = requests.post(endpoint, headers=headers, data=data)
     translated_text = response.json()

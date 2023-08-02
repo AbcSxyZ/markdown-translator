@@ -4,6 +4,8 @@ import subprocess
 import hashlib
 import os
 from .translators import translate_deepl
+from .renderers import CodeDisabledHTMLRenderer
+from .config import CODE_TRANSLATED
 
 class Markdown:
     """
@@ -105,7 +107,8 @@ class Markdown:
     @property
     def html(self):
         """ Get HTML representation of the markdown """
-        return mistletoe.markdown(str(self))
+        renderer = mistletoe.HTMLRenderer if CODE_TRANSLATED else CodeDisabledHTMLRenderer
+        return mistletoe.markdown(str(self), renderer)
 
     def _initialize_hashes(self, hashes):
         """ Replace blocks hashes with a new set (for translated files). """
