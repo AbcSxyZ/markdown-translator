@@ -47,6 +47,16 @@ markdown_obj.translate(lang_to="FR", lang_from="EN")
 markdown_obj.save("translated-text.md")
 print(markdown_obj)
 ```
+To update an existing translated file:
+```python
+old_version = Markdown(filename="backup.md")
+# Hashes of the old (non-translated) version are needed to manipulates blocks
+fr_version = Markdown(filename="FR-version.md", hashes=old_version.hashes)
+new_version = Markdown(filename="update.md")
+
+fr_version.update(new_version, lang_to="FR", lang_from="EN")
+```
+
 See source code for available functions as it is in development.
 ## License
 
