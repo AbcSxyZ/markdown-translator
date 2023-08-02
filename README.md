@@ -45,7 +45,7 @@ This is a paragraph with content to translate.
 markdown_obj = Markdown(markdown_text)
 markdown_obj.translate(lang_to="FR", lang_from="EN")
 markdown_obj.save("translated-text.md")
-print(translated_md)
+print(markdown_obj)
 ```
 See source code for available functions as it is in development.
 ## License
