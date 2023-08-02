@@ -25,32 +25,29 @@ pip install requests mistletoe
 
 ## Getting Started
 
-Clone the repository locally:
+1. **Clone the repository locally:**
 ```shell
 git clone https://github.com/AbcSxyZ/markdown_translator.git
 ```
 
+2. **Create and configure your `config.py` file inside the module folder, following `config-example.py` variables.**
+
 Basic example to translate some markdown content:
 ```python
-from markdown_translator import MarkdownTranslator
+from markdown_translator import Markdown
 
-translator = MarkdownTranslator("YOUR-DEEPL-API-KEY")
-
-markdown = """
+markdown_text = """
 ## First title to translate
 
 This is a paragraph with content to translate.
 """
 
-converted_html = translator.markdown_to_html(markdown)
-translated_html = translator.translate(converted_html, "EN", "FR")
-translated_md = translator.html_to_markdown(translated_html)
-
+markdown_obj = Markdown(markdown_text)
+markdown_obj.translate(lang_to="FR", lang_from="EN")
+markdown_obj.save("translated-text.md")
 print(translated_md)
 ```
-DeepL need to receive html content to avoid breaking markdown syntax during
-translations.
-
+See source code for available functions as it is in development.
 ## License
 
 Project licensed under [GNU Affero General Public License](/LICENSE) (GNU AGPL).
