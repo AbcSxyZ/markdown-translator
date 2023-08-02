@@ -32,7 +32,7 @@ git clone https://github.com/AbcSxyZ/markdown_translator.git
 
 2. **Create and configure your `config.py` (with API key), following `config-example.py` variables.**
 
-Basic example to translate some markdown content:
+3. **Run some code !**
 ```python
 from markdown_translator import Markdown
 
