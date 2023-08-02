@@ -21,14 +21,17 @@ class Markdown:
     >>> markdown_obj[block_hash] = "Title replacement"
     >>> markdown_obj.save("filename.md")
     """
-    def __init__(self, content, type="md", hashes=[]):
+    def __init__(self, text="", filename=None, type="md", hashes=[]):
         self.blocks = {}
 
+        if filename:
+            with open(filename) as file_stream:
+                text = file_stream.read()
+
         if type == "html":
-            content = self.html_to_markdown(content)
+            text = self.html_to_markdown(text)
 
-        self._split_markdown(content)
-
+        self._split_markdown(text)
         if hashes:
             self._initialize_hashes(hashes)
 
