@@ -30,7 +30,7 @@ pip install requests mistletoe
 git clone https://github.com/AbcSxyZ/markdown_translator.git
 ```
 
-2. **Create and configure your `config.py` file inside the module folder, following `config-example.py` variables.**
+2. **Create and configure your `config.py` (with API key), following `config-example.py` variables.**
 
 Basic example to translate some markdown content:
 ```python
