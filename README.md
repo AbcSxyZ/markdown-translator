@@ -1,7 +1,7 @@
 # Markdown Translator
 **[Development mode, prototype creation]**
 
-Translate versionned markdown files using DeepL.
+Automatic translation for versioned Markdown files and repositories.
 
 ## Installation
 
@@ -55,6 +55,13 @@ fr_version = Markdown(filename="FR-version.md", hashes=old_version.hashes)
 new_version = Markdown(filename="update.md")
 
 fr_version.update(new_version, lang_to="FR", lang_from="EN")
+```
+To manage translations of all Markdown files within a folder :
+```python
+from markdown_translator import RepositoryTranslator
+
+repo = RepositoryTranslator("source-folder", "destination-folder")
+repo.update()
 ```
 
 See source code for available functions as it is in development.

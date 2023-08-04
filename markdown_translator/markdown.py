@@ -2,15 +2,16 @@ import mistletoe
 from mistletoe.markdown_renderer import MarkdownRenderer
 import subprocess
 import hashlib
+import pathlib
 import os
 from .translators import translate_deepl
 from .renderers import CodeDisabledHTMLRenderer
-from .config import CODE_TRANSLATED
+from .config import CODE_TRANSLATED, EXCLUDE_URLS, EDIT_LINKS
 
 class Markdown:
     """
     Layer to manipulate and translate markdown text through its abstract syntax
-    tree. Possibility to update translated files to use with versionning.
+    tree. Possibility to update translated files to use with versioning.
 
     Split content into blocks manipulable blocks, based on hashes.
 
@@ -23,24 +24,27 @@ class Markdown:
     >>> markdown_obj[block_hash] = "Title replacement"
     >>> markdown_obj.save("filename.md")
     """
-    def __init__(self, text="", filename=None, type="md", hashes=[]):
+    def __init__(self, text="", filename="", hashes=[]):
         self.blocks = {}
+        self.filename = pathlib.Path(filename)
 
-        if filename:
-            with open(filename) as file_stream:
-                text = file_stream.read()
-
-        if type == "html":
-            text = self.html_to_markdown(text)
+        if self.filename.exists() and self.filename.is_file():
+            text = self.filename.read_text()
 
         self._split_markdown(text)
         if hashes:
             self._initialize_hashes(hashes)
 
-    def save(self, filename):
+    def save(self, filename=None):
         """Render markdown content into a file."""
-        with open(filename, "w") as file_stream:
-            print(self, file=file_stream)
+        if filename is None:
+            filename = self.filename
+        filename = pathlib.Path(filename)
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        filename.write_text(str(self) + "\n")
+
+    def delete(self):
+        self.filename.unlink(missing_ok=True)
 
     def translate(self, lang_to, lang_from=None):
         """
@@ -53,19 +57,20 @@ class Markdown:
         """
         html_translation = translate_deepl(self.html, lang_to, lang_from)
         markdown_conversion = self.__class__(
-                                    html_translation,
-                                    type="html",
+                                    self.html_to_markdown(html_translation),
                                     hashes=self.hashes,
                                         )
         self.blocks.update(markdown_conversion.blocks)
+        self._edit_links(lang_to)
 
     def update(self, new_version, lang_to, lang_from=None):
         """ Update a translated markdown file with its new version. """
-        # Retrieve modified content to modify only these blocks
-        diff_translations = new_version - self
+        # Retrieve modified content to translate only these blocks
+        if (diff_translations := new_version - self) is None:
+            return
         diff_translations.translate(lang_to, lang_from)
 
-        # Start from the number of blocks the new version, add translated content
+        # Start from the number of blocks of the new version, add translated content
         new_blocks = new_version.blocks.copy()
         new_blocks.update(diff_translations.blocks)
 
@@ -113,7 +118,8 @@ class Markdown:
     def _initialize_hashes(self, hashes):
         """ Replace blocks hashes with a new set (for translated files). """
         if len(self.blocks) != len(hashes):
-            err_msg = "Hash error : having {} block, {} hashes to setup."
+            err_msg = f"{self.filename} Hash error: "
+            err_msg += "having {} block, {} hashes to setup."
             raise Exception(err_msg.format(len(self.blocks), len(hashes)))
 
         refreshed_blocks = {}
@@ -131,6 +137,37 @@ class Markdown:
             block_hash = hashlib.md5(block_content.encode()).hexdigest()
             self.blocks[block_hash] = block_content
 
+    def _edit_links(self, extension):
+        """
+        Modify markdown links of an entire document to create subfolder with
+        translations. To configure with EDIT_LINKS and EXCLUDE_URLS settings.
+
+        Edit only absolute path, example : /abs/path -> /en/abs/path
+        """
+        # Transform markdown blocks into ast to edit links inside it.
+        for hash in self.blocks:
+            block_ast = mistletoe.Document(self[hash])
+            self._edit_ast_links(block_ast, extension)
+            self.blocks[hash] = self._ast_render(block_ast)
+
+    def _edit_ast_links(self, ast, extension):
+        """ Explore and modify recursively all (nested) links of an entire ast. """
+        for token in ast.children:
+            if self._is_editable_link(token):
+                token.target = os.path.join("/" + extension, token.target[1:])
+            if hasattr(token, 'children'):
+                self._edit_ast_links(token, extension)
+
+    @staticmethod
+    def _is_editable_link(ast_token):
+        if EDIT_LINKS == False: return False
+        if not isinstance(ast_token, mistletoe.span_token.Link): return False
+        if not ast_token.target.startswith("/"): return False
+
+        for exclude_url in EXCLUDE_URLS:
+            if ast_token.target.startswith(exclude_url): return False
+        return True
+
     @staticmethod
     def _ast_render(ast):
         with MarkdownRenderer() as renderer:
@@ -147,6 +184,8 @@ class Markdown:
 
     def __sub__(self, old_version):
         diff_hashes = set(self.hashes) - set(old_version.hashes)
+        if len(diff_hashes) == 0:
+            return None
         return Markdown(self._hashes_render(diff_hashes))
 
     def __str__(self):
