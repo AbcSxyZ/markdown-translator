@@ -6,7 +6,7 @@ import pathlib
 import os
 from .translators import translate_deepl
 from .renderers import CodeDisabledHTMLRenderer
-from .config import CODE_TRANSLATED, EXCLUDE_URLS, EDIT_LINKS
+from .configuration import config
 
 class Markdown:
     """
@@ -112,7 +112,11 @@ class Markdown:
     @property
     def html(self):
         """ Get HTML representation of the markdown """
-        renderer = mistletoe.HTMLRenderer if CODE_TRANSLATED else CodeDisabledHTMLRenderer
+        # Need of special attributes in HTML to avoid translations on some tags
+        if config.CODE_TRANSLATED:
+            renderer = mistletoe.HTMLRenderer
+        else:
+            renderer = CodeDisabledHTMLRenderer
         return mistletoe.markdown(str(self), renderer)
 
     def _initialize_hashes(self, hashes):
@@ -155,16 +159,17 @@ class Markdown:
         for token in ast.children:
             if self._is_editable_link(token):
                 token.target = os.path.join("/" + extension, token.target[1:])
+
             if hasattr(token, 'children'):
                 self._edit_ast_links(token, extension)
 
     @staticmethod
     def _is_editable_link(ast_token):
-        if EDIT_LINKS == False: return False
+        if config.EDIT_LINKS == False: return False
         if not isinstance(ast_token, mistletoe.span_token.Link): return False
         if not ast_token.target.startswith("/"): return False
 
-        for exclude_url in EXCLUDE_URLS:
+        for exclude_url in config.EXCLUDE_URLS:
             if ast_token.target.startswith(exclude_url): return False
         return True
 

@@ -25,16 +25,9 @@ pip install requests mistletoe
 
 ## Getting Started
 
-1. **Clone the repository locally:**
-```shell
-git clone https://github.com/AbcSxyZ/markdown_translator.git
-```
-
-2. **Create and configure your `config.py` (with API key), following `config-example.py` variables.**
-
-3. **Run some code !**
+To translate a single Markdown file
 ```python
-from markdown_translator import Markdown
+import markdown_translator
 
 markdown_text = """
 ## First title to translate
@@ -42,7 +35,9 @@ markdown_text = """
 This is a paragraph with content to translate.
 """
 
-markdown_obj = Markdown(markdown_text)
+markdown_translator.config(deepl_key=DEEPL_KEY)
+
+markdown_obj = markdown_translator.Markdown(markdown_text)
 markdown_obj.translate(lang_to="FR", lang_from="EN")
 markdown_obj.save("translated-text.md")
 print(markdown_obj)
@@ -58,13 +53,20 @@ fr_version.update(new_version, lang_to="FR", lang_from="EN")
 ```
 To manage translations of all Markdown files within a folder :
 ```python
-from markdown_translator import RepositoryTranslator
+import markdown_translator
 
-repo = RepositoryTranslator("source-folder", "destination-folder")
+markdown_translator.config(
+        deepl_key=DEEPL_KEY,
+        dest_lang=["fr"],
+        include_files=["include1", "file2"],
+        edit_links=False,
+        #...
+      )
+
+repo = markdown_translator.RepositoryTranslator("src-folder", "dest-folder")
 repo.update()
 ```
-
-See source code for available functions as it is in development.
+See source code for available functions and options as it is in development.
 ## License
 
 Project licensed under [GNU Affero General Public License](/LICENSE) (GNU AGPL).

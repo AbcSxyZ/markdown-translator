@@ -1,5 +1,6 @@
 import requests
-from .config import DEEPL_KEY
+from .configuration import config
+from .exceptions import MarkdownTranslatorError
 
 def translate_deepl(html_content, lang_to, lang_from=None):
     """
@@ -13,12 +14,18 @@ def translate_deepl(html_content, lang_to, lang_from=None):
         "Content-Type": "application/x-www-form-urlencoded",
     }
     data = {
-        "auth_key": DEEPL_KEY,
+        "auth_key": config.DEEPL_KEY,
         "text": html_content,
         "source_lang": lang_from,
         "target_lang": lang_to,
         "tag_handling": "html",
     }
     response = requests.post(endpoint, headers=headers, data=data)
-    translated_text = response.json()
-    return translated_text['translations'][0]['text']
+    
+    if response.status_code != 200:
+        error_msg = f"HTTP Error {response.status_code} on DeepL API"
+        if response.text:
+            error_msg += " (" + response.json()["message"] + ")"
+        raise MarkdownTranslatorError(error_msg)
+
+    return response.json()['translations'][0]['text']

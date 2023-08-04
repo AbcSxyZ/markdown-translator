@@ -1,9 +1,6 @@
 import pathlib
 from markdown_translator import Markdown
-from .config import (
-    SOURCE_LANG, DEST_LANG, KEEP_CLEAN,
-    INCLUDE_FILES, EXCLUDE_FILES, EXCLUDE_URLS
-    )
+from .configuration import config
 
 class RepositoryTranslator:
     """
@@ -33,9 +30,9 @@ class RepositoryTranslator:
         """ Generates versioned translations from the source folder. """
         for file_informations in self.files:
             file_informations["backup"].blocks = file_informations["origin"].blocks
-            for lang in DEST_LANG:
+            for lang in config.DEST_LANG:
                 file_informations[lang].update(file_informations["origin"], \
-                                    lang_to=lang, lang_from=SOURCE_LANG)
+                                    lang_to=lang, lang_from=config.SOURCE_LANG)
         self._save_translations()
 
     def _collect_files(self):
@@ -50,7 +47,7 @@ class RepositoryTranslator:
                 "origin" : Markdown(filename=file),
                 "backup" : Markdown(filename=self.backup_folder / relative_source),
                 }
-            for lang in DEST_LANG:
+            for lang in config.DEST_LANG:
                 translation = self.translations_folder / lang / relative_source
                 file_infos[lang] = Markdown(
                     filename=translation,
@@ -70,23 +67,24 @@ class RepositoryTranslator:
 
     @staticmethod
     def _valid_file(file):
-        if not file.is_file() or file.name in EXCLUDE_FILES:
+        if not file.is_file() or file.name in config.EXCLUDE_FILES:
             return False
-        return file.suffix == ".md" or file.name in INCLUDE_FILES
+        return file.suffix == ".md" or file.name in config.INCLUDE_FILES
 
     def _save_translations(self):
-        if KEEP_CLEAN:
+        if config.KEEP_CLEAN:
             self._clean()
 
         for file_informations in self.files:
             file_informations["backup"].save()
-            for lang in DEST_LANG:
+            for lang in config.DEST_LANG:
                 file_informations[lang].save()
 
     def _clean(self):
         """ Delete untracked files and folders from a previous version. """
         managed_folders = [self.backup_folder]
-        managed_folders = [self.translations_folder / lang for lang in DEST_LANG]
+        for lang in config.DEST_LANG:
+            managed_folders.append(self.translations_folder / lang)
 
         for folder in managed_folders:
             # Remove files available only in a previous version
