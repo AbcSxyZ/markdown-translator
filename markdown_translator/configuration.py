@@ -16,6 +16,7 @@ class Configuration:
         self.SOURCE_LANG = ""
         self.DEST_LANG = []
 
+        self.VERBOSE = True
         self.CODE_TRANSLATED = False
         self.EDIT_LINKS = True
         self.KEEP_CLEAN = True

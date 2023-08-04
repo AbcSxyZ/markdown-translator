@@ -28,11 +28,21 @@ class RepositoryTranslator:
 
     def update(self):
         """ Generates versioned translations from the source folder. """
-        for file_informations in self.files:
-            file_informations["backup"].blocks = file_informations["origin"].blocks
+        for file_infos in self.files:
+            if file_infos["backup"] == file_infos["origin"]:
+                continue
+
             for lang in config.DEST_LANG:
-                file_informations[lang].update(file_informations["origin"], \
-                                    lang_to=lang, lang_from=config.SOURCE_LANG)
+                file_infos[lang].update(
+                                file_infos["origin"],
+                                lang_to=lang,
+                                lang_from=config.SOURCE_LANG
+                                )
+                if config.VERBOSE:
+                    path = file_infos["origin"].filename
+                    print(f"{lang} translated: {path.relative_to(self.source)}")
+
+            file_infos["backup"].blocks = file_infos["origin"].blocks
         self._save_translations()
 
     def _collect_files(self):
@@ -75,10 +85,10 @@ class RepositoryTranslator:
         if config.KEEP_CLEAN:
             self._clean()
 
-        for file_informations in self.files:
-            file_informations["backup"].save()
+        for file_infos in self.files:
+            file_infos["backup"].save()
             for lang in config.DEST_LANG:
-                file_informations[lang].save()
+                file_infos[lang].save()
 
     def _clean(self):
         """ Delete untracked files and folders from a previous version. """

@@ -193,5 +193,8 @@ class Markdown:
             return None
         return Markdown(self._hashes_render(diff_hashes))
 
+    def __eq__(self, other):
+        return self.hashes == other.hashes
+
     def __str__(self):
         return self._hashes_render(self.hashes)
