@@ -310,55 +310,55 @@ def test_markdown_basic_update():
 
 def test_markdown_complex_update():
     old_backup_content = """
-# A first title
+# Title 1
 
-A first paragraph.
+Paragraph 1.
 
-## A second heading
+## Title 2
 
-Second paragraph.
+Paragraph 2.
 
-## A third heading
+## Title 3
 
-A third paragraph.
+Paragraph 3.
 """
     new_version_content = """
-# A first title
+# Title 1
 
-A first paragraph.
+Paragraph 1.
 
-## A second heading, with a paragraph
+## Title 2, content
 
-Second paragraph.
+Paragraph 2.
 
-## A third heading
+## Title 3
 
-* A new list.
+* List 1
 
-A third paragraph.
+Paragraph 3.
 """
     old_translated_content = """
-# Un premier titre
+# Titre 1
 
-Un premier paragraphe.
+Paragraphe 1.
 
-## Un deuxième titre
+## Titre 2
 
-Un deuxième paragraphe.
+Paragraphe 2.
 
-## Un troisième titre
+## Titre 3
 
-Un troisième paragraphe.
+Paragraphe 3.
     """
 
     expected_blocks = {
-        "5b923625584690d2fc07c1c2234bf64f": "# Un premier titre",
-        "bddbee052b954ec98004b898b5d6c29e": "Un premier paragraphe.",
-        "9fec2ad9fc925e8c25227ff77d9811c2": "## Un deuxi\u00e8me titre, avec un paragraphe",
-        "1c43011c2f7619648251ed0e4709bbe4": "Un deuxi\u00e8me paragraphe.",
-        "a96299757204ab5c9f8c23a53f2f0daf": "## Un troisi\u00e8me titre",
-        "35931c5eb07639cd4d3d053aef43b729": "* Une nouvelle liste.",
-        "715292b428b4f0ecbb16b9bd605db3f9": "Un troisi\u00e8me paragraphe."
+        "96ef59a579862bb37868bde6dadebd1b": "# Titre 1",
+        "f03a9182f03bc6e40707c350729da1a5": "Paragraphe 1.",
+        "865377abeddbce4cb60992aebfb919ea": "## Titre 2, contenu",
+        "6c6d57475b638bd0f2e65c081bae817f": "Paragraphe 2.",
+        "3c18648b588843110eba329537fb0caa": "## Titre 3",
+        "f6779dad88267babc6b02d6bdfbcec2f": "* Liste 1",
+        "b5d384ea16b5ce2945536d5fe587afc6": "Paragraphe 3."
         }
 
     old_backup = Markdown(text=old_backup_content)
