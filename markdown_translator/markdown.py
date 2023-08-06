@@ -185,6 +185,8 @@ class Markdown:
         return self.blocks.get(block_hash)
 
     def __setitem__(self, block_hash, new_content):
+        if block_hash not in self.hashes:
+            self.hashes.append(block_hash)
         self.blocks[block_hash] = new_content
 
     def __sub__(self, old_version):
