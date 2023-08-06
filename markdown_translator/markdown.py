@@ -29,7 +29,7 @@ class Markdown:
         self.hashes = []
         self.filename = pathlib.Path(filename)
 
-        if self.filename.exists() and self.filename.is_file():
+        if self.filename.is_file():
             text = self.filename.read_text()
 
         self._split_markdown(text.strip())
