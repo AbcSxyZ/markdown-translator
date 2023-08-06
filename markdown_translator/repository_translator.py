@@ -43,6 +43,7 @@ class RepositoryTranslator:
                     print(f"{lang} translated: {path.relative_to(self.source)}")
 
             file_infos["backup"].blocks = file_infos["origin"].blocks
+            file_infos["backup"].hashes = file_infos["origin"].hashes
         self._save_translations()
 
     def _collect_files(self):
