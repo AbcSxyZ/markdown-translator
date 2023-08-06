@@ -67,6 +67,15 @@ repo = markdown_translator.RepositoryTranslator("src-folder", "dest-folder")
 repo.update()
 ```
 See source code for available functions and options as it is in development.
+## Tests
+
+You need to install `pytest` first in order to execute tests.
+
+API key is needed for some tests. You should configure a `translations.ini` file, see `translations.template.ini`.
+```bash
+python -m pytest
+```
+
 ## License
 
 Project licensed under [GNU Affero General Public License](/LICENSE) (GNU AGPL).

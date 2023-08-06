@@ -19,7 +19,7 @@ class Configuration:
         self.VERBOSE = True
         self.CODE_TRANSLATED = False
         self.EDIT_LINKS = True
-        self.KEEP_CLEAN = True
+        self.KEEP_CLEAN = False
 
         self.INCLUDE_FILES = []
         self.EXCLUDE_FILES = []
@@ -38,10 +38,10 @@ class Configuration:
         for key, value in kwargs.items():
             self._setattr(key.upper(), self._parse_value(value))
 
-    def load_ini(self, ini_path='settings.ini'):
+    def load_ini(self, ini_path='translations.ini'):
         parser = configparser.ConfigParser()
         parser.read(ini_path)
-        for key, value in parser.items('DEFAULT'):
+        for key, value in parser.items('settings'):
             self._setattr(key.upper(), self._parse_value(value))
 
     def load_environment(self):

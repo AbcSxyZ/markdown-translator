@@ -26,12 +26,13 @@ class Markdown:
     """
     def __init__(self, text="", filename="", hashes=[]):
         self.blocks = {}
+        self.hashes = []
         self.filename = pathlib.Path(filename)
 
         if self.filename.exists() and self.filename.is_file():
             text = self.filename.read_text()
 
-        self._split_markdown(text)
+        self._split_markdown(text.strip())
         if hashes:
             self._initialize_hashes(hashes)
 
@@ -56,6 +57,7 @@ class Markdown:
         See translators.py for available tools.
         """
         html_translation = translate_deepl(self.html, lang_to, lang_from)
+
         markdown_conversion = self.__class__(
                                     self.html_to_markdown(html_translation),
                                     hashes=self.hashes,
@@ -80,6 +82,7 @@ class Markdown:
                 new_blocks[hash] = self[hash]
 
         self.blocks = new_blocks
+        self.hashes = new_version.hashes
 
     def standardize(self):
         """
@@ -103,11 +106,6 @@ class Markdown:
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
         markdown, _ = converter.communicate(input=html_text)
         return markdown
-
-    @property
-    def hashes(self):
-        """ Get all blocks hashes of a markdown text, represent its structure."""
-        return list(self.blocks.keys())
 
     @property
     def html(self):
@@ -134,12 +132,14 @@ class Markdown:
     def _split_markdown(self, markdown_text):
         """ Parse markdown content to divide into blocks, by title, paragraph... """
         self.blocks = {}
+        self.hashes = []
 
         ast = mistletoe.Document(markdown_text)
         for block in ast.children:
             block_content = self._ast_render(block)
             block_hash = hashlib.md5(block_content.encode()).hexdigest()
             self.blocks[block_hash] = block_content
+            self.hashes.append(block_hash)
 
     def _edit_links(self, extension):
         """
