@@ -2,55 +2,7 @@ from pathlib import Path
 import pytest
 import markdown_translator
 from markdown_translator import translators, RepositoryTranslator
-
-def create_structure(folder, structure):
-    """ Create a directory structure given a folder description. """
-    folder = Path(folder)
-    folder.mkdir(exist_ok=True)
-    for name, content in structure.items():
-        path = folder / name
-        if isinstance(content, dict):
-            path.mkdir()
-            create_structure(path, content)
-        else:
-            path.write_text(content + "\n")
-
-def verify_structure(folder, structure):
-    """ Verification function of folders architectures for tests. """
-    folder = Path(folder)
-    for name, content in structure.items():
-        path = folder / name
-        if isinstance(content, dict):
-            assert path.is_dir()
-            verify_structure(path, content)
-        else:
-            assert path.is_file()
-            try:
-                assert path.read_text().strip() == content.strip()
-            except AssertionError as error:
-                print(str(path))
-                raise error
-
-def translation_hook(html, *args, **kwargs):
-    return html
-
-def disable_translation(test_func):
-    """ Hook to avoid API calls during testing. """
-    @pytest.mark.usefixtures("request")
-    def wrapper(request, *args, **kwargs):
-        # Access tests fixtures
-        tmp_path = request.getfixturevalue('tmp_path')
-
-        # Backup of the original translation function
-        translation_function = translators.translate_deepl
-
-        # Run the test with translation disabled and re-enabled
-        translators.translate_deepl = translation_hook
-        result = test_func(tmp_path)
-        translators.translate_deepl = translation_function
-
-        return result
-    return wrapper
+from utils_tests import *
 
 @disable_translation
 def test_create_and_verify_structure(tmp_path):
@@ -92,6 +44,120 @@ def test_repo_translator_simple(tmp_path):
     create_structure(source_folder, test_structure)
 
     markdown_translator.config(dest_lang=["fr"])
+    repo = RepositoryTranslator(source_folder, dest_folder)
+    repo.update()
+
+    verify_structure(dest_folder, expected_structure)
+
+@disable_translation
+def test_repo_translator_with_subfolder(tmp_path):
+    test_structure = {
+        'subfolder': {
+            'somefile.md': '# Title in Subfolder',
+        },
+        'anotherfile.md': '# Title Outside Subfolder',
+    }
+    expected_structure = {
+        'backup': {
+            'subfolder': {
+                'somefile.md': '# Title in Subfolder',
+            },
+            'anotherfile.md': '# Title Outside Subfolder',
+        },
+        'translations': {
+            'fr': {
+                'subfolder': {
+                    'somefile.md': '# Title in Subfolder',
+                },
+                'anotherfile.md': '# Title Outside Subfolder',
+            },
+        }
+    }
+    source_folder = str(tmp_path / "source")
+    dest_folder = str(tmp_path / "destination")
+    create_structure(source_folder, test_structure)
+
+    markdown_translator.config(dest_lang=["fr"])
+    repo = RepositoryTranslator(source_folder, dest_folder)
+    repo.update()
+
+    verify_structure(dest_folder, expected_structure)
+
+@disable_translation
+def test_repo_translator_two_languages(tmp_path):
+    test_structure = {
+        'somefile.md': '# Title',
+    }
+    expected_structure = {
+        'backup': {
+            'somefile.md': '# Title',
+        },
+        'translations': {
+            'fr': {
+                'somefile.md': '# Title',
+            },
+            'es': {
+                'somefile.md': '# Title',
+            },
+        }
+    }
+    source_folder = str(tmp_path / "source")
+    dest_folder = str(tmp_path / "destination")
+    create_structure(source_folder, test_structure)
+
+    markdown_translator.config(dest_lang=["fr", "es"])
+    repo = RepositoryTranslator(source_folder, dest_folder)
+    repo.update()
+
+    verify_structure(dest_folder, expected_structure)
+
+@disable_translation
+def test_repo_translator_nested_folders_with_files_two_languages(tmp_path):
+    test_structure = {
+        'file0.md': '# Title Level 0',
+        'folder1': {
+            'file1.md': '# Title Level 1',
+            'folder2': {
+                'file2.md': '# Title Level 2',
+            },
+        },
+    }
+    expected_structure = {
+        'backup': {
+            'file0.md': '# Title Level 0',
+            'folder1': {
+                'file1.md': '# Title Level 1',
+                'folder2': {
+                    'file2.md': '# Title Level 2',
+                },
+            },
+        },
+        'translations': {
+            'fr': {
+                'file0.md': '# Title Level 0',
+                'folder1': {
+                    'file1.md': '# Title Level 1',
+                    'folder2': {
+                        'file2.md': '# Title Level 2',
+                    },
+                },
+            },
+            'es': {
+                'file0.md': '# Title Level 0',
+                'folder1': {
+                    'file1.md': '# Title Level 1',
+                    'folder2': {
+                        'file2.md': '# Title Level 2',
+                    },
+                },
+            },
+        }
+    }
+    source_folder = str(tmp_path / "source")
+    dest_folder = str(tmp_path / "destination")
+    create_structure(source_folder, test_structure)
+
+    markdown_translator.config(dest_lang=["fr", "es"])
     repo = RepositoryTranslator(source_folder, dest_folder)
     repo.update()
 

@@ -4,24 +4,6 @@ from markdown_translator import Markdown, config
 from datetime import datetime
 import json
 
-def log(content, context=""):
-    """ Utils to debug and write tests. """
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_msg = f"{now} : {context}\n"
-
-    with open("tests.log", "a") as logfile:
-        print(log_msg, file=logfile)
-        if type(content) in [dict, list]:
-            content = json.dumps(content, indent=4)
-        print(content, file=logfile)
-
-@pytest.fixture
-def create_markdown_file(tmp_path):
-    def _create_markdown_file(content):
-        markdown_file = tmp_path / "test.md"
-        markdown_file.write_text(content)
-        return str(markdown_file)
-    return _create_markdown_file
 
 def test_markdown_save(create_markdown_file):
     content = """# A nice title
