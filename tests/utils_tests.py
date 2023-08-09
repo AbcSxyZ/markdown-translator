@@ -19,27 +19,24 @@ def create_structure(folder, structure):
     folder.mkdir(exist_ok=True)
     for name, content in structure.items():
         path = folder / name
+
         if isinstance(content, dict):
             path.mkdir()
             create_structure(path, content)
         else:
             path.write_text(content + "\n")
 
-def verify_structure(folder, structure):
-    """ Verification function of folders architectures for tests. """
-    folder = Path(folder)
-    for name, content in structure.items():
-        path = folder / name
-        if isinstance(content, dict):
-            assert path.is_dir()
-            verify_structure(path, content)
+def convert_to_dict(directory):
+    """Converts the folder structure starting from the given directory to a dictionary."""
+    directory = Path(directory)
+    structure = {}
+    for path in sorted(directory.iterdir()):
+        if path.is_dir():
+            structure[path.name] = convert_to_dict(path)
         else:
-            assert path.is_file()
-            try:
-                assert path.read_text().strip() == content.strip()
-            except AssertionError as error:
-                print(str(path))
-                raise error
+            with open(path, 'r') as file:
+                structure[path.name] = file.read().strip()
+    return structure
 
 def translation_hook(html, *args, **kwargs):
     return html
