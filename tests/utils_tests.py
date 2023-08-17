@@ -35,7 +35,10 @@ def convert_to_dict(directory):
             structure[path.name] = convert_to_dict(path)
         else:
             with open(path, 'r') as file:
-                structure[path.name] = file.read().strip()
+                try:
+                    structure[path.name] = file.read().strip()
+                except UnicodeDecodeError:
+                    structure[path.name] = "...binary..."
     return structure
 
 def translation_hook(html, *args, **kwargs):

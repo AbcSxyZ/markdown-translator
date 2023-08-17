@@ -21,7 +21,7 @@ def translate_deepl(html_content, lang_to, lang_from=None):
         "tag_handling": "html",
     }
     response = requests.post(endpoint, headers=headers, data=data)
-    
+
     if response.status_code != 200:
         error_msg = f"HTTP Error {response.status_code} on DeepL API"
         if response.text:

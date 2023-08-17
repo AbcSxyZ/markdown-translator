@@ -4,6 +4,11 @@ import markdown_translator
 from markdown_translator import translators, RepositoryTranslator
 from utils_tests import *
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_module():
+    """Global configuration for RepositoryTranslator tests."""
+    markdown_translator.config(versioning="sql")
+
 @disable_translation
 def test_create_and_verify_structure(tmp_path):
     """
@@ -30,14 +35,10 @@ def test_repo_translator_simple(tmp_path):
         'somefile.md': '# Title',
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : "...binary...",
+        'fr': {
             'somefile.md': '# Title',
             },
-        'translations' : {
-            'fr': {
-                'somefile.md': '# Title',
-                },
-            }
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -59,20 +60,13 @@ def test_repo_translator_with_subfolder(tmp_path):
         'anotherfile.md': '# Title Outside Subfolder',
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder',
             },
             'anotherfile.md': '# Title Outside Subfolder',
         },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                },
-                'anotherfile.md': '# Title Outside Subfolder',
-            },
-        }
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -91,17 +85,13 @@ def test_repo_translator_two_languages(tmp_path):
         'somefile.md': '# Title',
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'somefile.md': '# Title',
         },
-        'translations': {
-            'fr': {
-                'somefile.md': '# Title',
-            },
-            'es': {
-                'somefile.md': '# Title',
-            },
-        }
+        'es': {
+            'somefile.md': '# Title',
+        },
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -126,7 +116,8 @@ def test_repo_translator_nested_folders_with_files_two_languages(tmp_path):
         },
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'file0.md': '# Title Level 0',
             'folder1': {
                 'file1.md': '# Title Level 1',
@@ -135,26 +126,15 @@ def test_repo_translator_nested_folders_with_files_two_languages(tmp_path):
                 },
             },
         },
-        'translations': {
-            'fr': {
-                'file0.md': '# Title Level 0',
-                'folder1': {
-                    'file1.md': '# Title Level 1',
-                    'folder2': {
-                        'file2.md': '# Title Level 2',
-                    },
+        'es': {
+            'file0.md': '# Title Level 0',
+            'folder1': {
+                'file1.md': '# Title Level 1',
+                'folder2': {
+                    'file2.md': '# Title Level 2',
                 },
             },
-            'es': {
-                'file0.md': '# Title Level 0',
-                'folder1': {
-                    'file1.md': '# Title Level 1',
-                    'folder2': {
-                        'file2.md': '# Title Level 2',
-                    },
-                },
-            },
-        }
+        },
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -181,20 +161,13 @@ def test_repo_translator_ignore(tmp_path):
         'ignored_file2.py' : "import life.cheats",
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                },
-                'anotherfile.md': '# Title Outside Subfolder',
+                'somefile.md': '# Title in Subfolder',
             },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                },
-                'anotherfile.md': '# Title Outside Subfolder',
-            },
-        }
+            'anotherfile.md': '# Title Outside Subfolder',
+        },
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -225,7 +198,8 @@ def test_repo_translator_include(tmp_path):
         'used_file.py' : "import life.cheats",
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder',
                 'used_folder' : {
@@ -235,18 +209,6 @@ def test_repo_translator_include(tmp_path):
             'anotherfile.md': '# Title Outside Subfolder',
             'used_file.py' : "import life.cheats",
         },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                    'used_folder' : {
-                        "usefull" : "really usefull",
-                    }
-                },
-                'anotherfile.md': '# Title Outside Subfolder',
-                'used_file.py' : "import life.cheats",
-            },
-        }
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -273,18 +235,12 @@ def test_repo_translator_exclude(tmp_path):
         'anotherfile.md': '# Title Outside Subfolder',
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder',
             },
-            },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                },
-            },
-        }
+        },
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -316,7 +272,8 @@ def test_repo_translator_mix_include_exclude_2lang(tmp_path):
         'used_file.py' : "import life.cheats",
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder',
                 'used_folder' : {
@@ -325,26 +282,15 @@ def test_repo_translator_mix_include_exclude_2lang(tmp_path):
             },
             'used_file.py' : "import life.cheats",
         },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                    'used_folder' : {
-                        "usefull" : "really usefull",
-                    }
-                },
-                'used_file.py' : "import life.cheats",
+        'es': {
+            'subfolder': {
+                'somefile.md': '# Title in Subfolder',
+                'used_folder' : {
+                    "usefull" : "really usefull",
+                }
             },
-            'es': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                    'used_folder' : {
-                        "usefull" : "really usefull",
-                    }
-                },
-                'used_file.py' : "import life.cheats",
-            },
-        }
+            'used_file.py' : "import life.cheats",
+        },
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -372,35 +318,26 @@ def test_repo_translator_keep_clean(tmp_path):
         'new_version2.md' : "`Usefull code`",
     }
     old_structure = {
-        'backup': {
+        'fr': {
             'subfolder': {
-                'somefile.md': '# Title in Subfolder',
+                'somefile.md': '# Titre de sous-dossier',
+                'old_version.md' : 'Paragraphe inutile',
+            },
+            'anotherfile.md': '# Titre en dehors de sous-dossier',
+            'old_version2.md' : "`Code inutile`",
+        },
+        'es': {
+            'subfolder': {
+                'somefile.md': '# Title in Subfolde',
                 'old_version.md' : 'Useless paragraph',
             },
             'anotherfile.md': '# Title Outside Subfolder',
             'old_version2.md' : "`Useless code`",
-        },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Titre de sous-dossier',
-                    'old_version.md' : 'Paragraphe inutile',
-                },
-                'anotherfile.md': '# Titre en dehors de sous-dossier',
-                'old_version2.md' : "`Code inutile`",
-            },
-            'es': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolde',
-                    'old_version.md' : 'Useless paragraph',
-                },
-                'anotherfile.md': '# Title Outside Subfolder',
-                'old_version2.md' : "`Useless code`",
-            }
         }
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder (updated)',
                 'new_version.md' : 'Usefull paragraph',
@@ -408,24 +345,14 @@ def test_repo_translator_keep_clean(tmp_path):
             'anotherfile.md': '# Title Outside Subfolder (updated)',
             'new_version2.md' : "`Usefull code`",
         },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder (updated)',
-                    'new_version.md' : 'Usefull paragraph',
-                },
-                'anotherfile.md': '# Title Outside Subfolder (updated)',
-                'new_version2.md' : "`Usefull code`",
+        'es': {
+            'subfolder': {
+                'somefile.md': '# Title in Subfolder (updated)',
+                'new_version.md' : 'Usefull paragraph',
             },
-            'es': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder (updated)',
-                    'new_version.md' : 'Usefull paragraph',
-                },
-                'anotherfile.md': '# Title Outside Subfolder (updated)',
-                'new_version2.md' : "`Usefull code`",
-            },
-        }
+            'anotherfile.md': '# Title Outside Subfolder (updated)',
+            'new_version2.md' : "`Usefull code`",
+        },
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")
@@ -454,54 +381,37 @@ def test_repo_translator_content_update(tmp_path):
         'not-updated.md': 'Still same paragraph.'
     }
     old_structure = {
-        'backup': {
+        'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder',
             },
             'anotherfile.md': '# Title Outside Subfolder',
             'not-updated.md': 'Still same paragraph.'
         },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                },
-                'anotherfile.md': '# Title Outside Subfolder',
-                'not-updated.md': 'Still same paragraph.'
+        'es': {
+            'subfolder': {
+                'somefile.md': '# Title in Subfolder',
             },
-            'es': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder',
-                },
-                'anotherfile.md': '# Title Outside Subfolder',
-                'not-updated.md': 'Still same paragraph.'
-            }
+            'anotherfile.md': '# Title Outside Subfolder',
+            'not-updated.md': 'Still same paragraph.'
         }
     }
     expected_structure = {
-        'backup': {
+        'hashes.db' : '...binary...',
+        'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder (updated 1)',
             },
             'anotherfile.md': '# Title Outside Subfolder (updated 2)',
             'not-updated.md': 'Still same paragraph.'
         },
-        'translations': {
-            'fr': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder (updated 1)',
-                },
-                'anotherfile.md': '# Title Outside Subfolder (updated 2)',
-                'not-updated.md': 'Still same paragraph.'
+        'es': {
+            'subfolder': {
+                'somefile.md': '# Title in Subfolder (updated 1)',
             },
-            'es': {
-                'subfolder': {
-                    'somefile.md': '# Title in Subfolder (updated 1)',
-                },
-                'anotherfile.md': '# Title Outside Subfolder (updated 2)',
-                'not-updated.md': 'Still same paragraph.'
-            },
-        }
+            'anotherfile.md': '# Title Outside Subfolder (updated 2)',
+            'not-updated.md': 'Still same paragraph.'
+        },
     }
     source_folder = str(tmp_path / "source")
     dest_folder = str(tmp_path / "destination")

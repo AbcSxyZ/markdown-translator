@@ -4,29 +4,45 @@ from markdown_translator import Markdown, config
 from datetime import datetime
 import json
 
+# To test :
+# - diff of markdown, without any diff.
+# - Fix test for updates (+ test versioning mecanism more globally)
 
-def test_markdown_save(create_markdown_file):
+@pytest.mark.parametrize("mode", [
+    "json",
+    "sql",
+])
+def test_markdown_save_delete(create_markdown_file, mode):
     content = """# A nice title
 
 With a nice paragraph.
 """
+    reference_hashes = [
+        "fcea49b3e77bccf0bf831ea8de12ae4a",
+        "136ec4d2f033089fe2a7c1c99c104006",
+    ]
     markdown_file = pathlib.Path(create_markdown_file(""))
     markdown_file.unlink()
 
+    # Perform save tests
+    config(versioning=mode)
+    config.set_hashes_adapter(markdown_file.parents[0])
     md = Markdown(text=content)
     md.save(markdown_file)
     assert markdown_file.exists()
 
-    writed_content = markdown_file.read_text()
-    assert writed_content == content
+    # Control save tests
+    saved_hashes = config.hashes_adapter.get(str(markdown_file))
+    result_content = markdown_file.read_text()
+    assert result_content == content
+    assert saved_hashes == reference_hashes
 
-def test_markdown_delete(create_markdown_file):
-    markdown_file = pathlib.Path(create_markdown_file(""))
-
-    assert markdown_file.exists()
-    md = Markdown(filename=str(markdown_file))
+    # Perfom deletion tests
+    md = Markdown(filename=markdown_file)
     md.delete()
+    saved_hashes = config.hashes_adapter.get(str(markdown_file))
     assert not markdown_file.exists()
+    assert saved_hashes == None
 
 def test_markdown_block(create_markdown_file):
     content = "# Test title"
@@ -36,8 +52,8 @@ def test_markdown_block(create_markdown_file):
 
     markdown_file = create_markdown_file(content)
     md = Markdown(filename=markdown_file)
-    assert md.blocks == expected_blocks
-    assert md.hashes == list(expected_blocks.keys())
+    assert md.blocks.childrens == expected_blocks
+    assert md.blocks.hashes == list(expected_blocks.keys())
 
 def test_markdown_spaces(create_markdown_file):
     content = """
@@ -61,8 +77,8 @@ One sentence with extra         space
 
     markdown_file = create_markdown_file(content)
     md = Markdown(filename=markdown_file)
-    assert md.blocks == expected_blocks
-    assert md.hashes == list(expected_blocks.keys())
+    assert md.blocks.childrens == expected_blocks
+    assert md.blocks.hashes == list(expected_blocks.keys())
 
 def test_markdown_syntax(create_markdown_file):
     content = """
@@ -102,8 +118,8 @@ code block
 
     markdown_file = create_markdown_file(content)
     md = Markdown(filename=markdown_file)
-    assert md.blocks == expected_blocks
-    assert md.hashes == list(expected_blocks.keys())
+    assert md.blocks.childrens == expected_blocks
+    assert md.blocks.hashes == list(expected_blocks.keys())
 
 def test_markdown_syntax_html(create_markdown_file):
     content = """
@@ -181,8 +197,8 @@ Broker title
     markdown_file = create_markdown_file(content)
     md = Markdown(filename=markdown_file)
     md.standardize()
-    assert md.blocks == expected_blocks
-    assert md.hashes == list(expected_blocks.keys())
+    assert md.blocks.childrens == expected_blocks
+    assert md.blocks.hashes == list(expected_blocks.keys())
 
 def test_markdown_with_html(create_markdown_file):
     content = """
@@ -202,8 +218,8 @@ def test_markdown_with_html(create_markdown_file):
 
     markdown_file = create_markdown_file(content)
     md = Markdown(filename=markdown_file)
-    assert md.blocks == expected_blocks
-    assert md.hashes == list(expected_blocks.keys())
+    assert md.blocks.childrens == expected_blocks
+    assert md.blocks.hashes == list(expected_blocks.keys())
 
 def test_markdown_with_multi_html(create_markdown_file):
     content = """
@@ -237,8 +253,8 @@ def test_markdown_with_multi_html(create_markdown_file):
 
     markdown_file = create_markdown_file(content)
     md = Markdown(filename=markdown_file)
-    assert md.blocks == expected_blocks
-    assert md.hashes == expected_hashes
+    assert md.blocks.childrens == expected_blocks
+    assert md.blocks.hashes == expected_hashes
 
 def test_markdown_link_edit(create_markdown_file):
     content = """
@@ -257,8 +273,8 @@ Third link, non edited, [Wikipedia](https://www.wikipedia.org/).
     markdown_file = create_markdown_file(content)
     md = Markdown(filename=markdown_file)
     md._edit_links("en")
-    assert md.blocks == expected_blocks
-    assert md.hashes == list(expected_blocks.keys())
+    assert md.blocks.childrens == expected_blocks
+    assert md.blocks.hashes == list(expected_blocks.keys())
 
 def test_markdown_translate():
     content = "# An easy title"
@@ -268,16 +284,17 @@ def test_markdown_translate():
 
     md = Markdown(text=content)
 
-    first_hash = md.hashes[0]
+    first_hash = md.blocks.hashes[0]
     md.translate(lang_to="fr")
-    final_hash = md.hashes[0]
+    final_hash = md.blocks.hashes[0]
 
-    assert md.blocks == expected_blocks
+    assert md.blocks.childrens == expected_blocks
     assert first_hash == final_hash
 
 def test_markdown_basic_update():
+    ### TEST NOT WORKING PROPERLY, RESTORE_HASHES not possible
     old_backup = Markdown(text="# An easy title")
-    old_translated = Markdown(text="# Un titre facile", hashes=old_backup.hashes)
+    old_translated = Markdown(text="# Un titre facile", restore_hashes=True)
     new_version = Markdown(text="# An easy title\nFirst paragraph\n")
 
     old_translated.update(new_version, lang_to="fr", lang_from="en")
@@ -287,10 +304,12 @@ def test_markdown_basic_update():
         "ca045bcbf99e1c9aeac6658ec3788d90": "Premier paragraphe"
         }
 
-    assert old_translated.blocks == expected_blocks
-    assert old_translated.hashes == new_version.hashes
+    assert old_translated.blocks.childrens == expected_blocks
+    assert old_translated.blocks.hashes == new_version.blocks.hashes
 
 def test_markdown_complex_update():
+    ### TEST NOT WORKING PROPERLY, RESTORE_HASHES not possible
+
     old_backup_content = """
 # Title 1
 
@@ -344,10 +363,10 @@ Paragraphe 3.
         }
 
     old_backup = Markdown(text=old_backup_content)
-    old_translated = Markdown(text=old_translated_content, hashes=old_backup.hashes)
+    old_translated = Markdown(text=old_translated_content, restore_hashes=True)
     new_version = Markdown(text=new_version_content)
 
     old_translated.update(new_version, lang_to="fr", lang_from="en")
 
-    assert old_translated.blocks == expected_blocks
-    assert old_translated.hashes == new_version.hashes
+    assert old_translated.blocks.childrens == expected_blocks
+    assert old_translated.blocks.hashes == new_version.blocks.hashes

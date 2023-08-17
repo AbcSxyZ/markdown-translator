@@ -2,6 +2,7 @@ import configparser
 import os
 import sys
 from .exceptions import MarkdownTranslatorError
+from .hashes_adapters import *
 
 class Configuration:
     """
@@ -16,6 +17,9 @@ class Configuration:
         self.SOURCE_LANG = ""
         self.DEST_LANG = []
 
+        # Available versioning method (see adapters) : json, sql.
+        self.VERSIONING = None
+
         self.VERBOSE = True
         self.CODE_TRANSLATED = False
         self.EDIT_LINKS = True
@@ -25,6 +29,7 @@ class Configuration:
         self.EXCLUDE_FILES = []
         self.EXCLUDE_URLS = []
 
+        self.hashes_adapter = BlockHashesAdapter()
         self.load_ini()
         self.load_environment()
 
@@ -32,6 +37,17 @@ class Configuration:
     def values(self):
         """ Retrieve all available configuration settings. """
         return self.__dict__
+
+    def set_hashes_adapter(self, folder):
+        """ Configure adapter to store hashes of translated files. """
+        available_adapters = {
+            "json" : BlockHashesJSONAdapter,
+            "sql" : BlockHashesSQLAdapter,
+            }
+        if self.VERSIONING is not None:
+            adapter = available_adapters.get(self.VERSIONING.lower())
+        if callable(adapter):
+            self.hashes_adapter = adapter(folder)
 
     def __call__(self, **kwargs):
         """ Change any available setting of the configuration. """

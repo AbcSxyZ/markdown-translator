@@ -44,13 +44,20 @@ print(markdown_obj)
 ```
 To update an existing translated file:
 ```python
-old_version = Markdown(filename="backup.md")
-# Hashes of the old (non-translated) version are needed to manipulates blocks
-fr_version = Markdown(filename="FR-version.md", hashes=old_version.hashes)
+# Require to enable versioning
+markdown_translator.config(versioning="sql")
+markdown_translator.config.set_hashes_adapter(".")
+
+# Perform your first translation as explained previously.
+# [first translations...]
+
+# Then to update an already translated file
+translated_md = Markdown(filename="translated-text.md", restore_hashes=True)
 new_version = Markdown(filename="update.md")
 
-fr_version.update(new_version, lang_to="FR", lang_from="EN")
+translated_md.update(new_version, lang_to="FR", lang_from="EN")
 ```
+
 To manage translations of all Markdown files within a folder :
 ```python
 import markdown_translator
@@ -60,12 +67,14 @@ markdown_translator.config(
         dest_lang=["fr"],
         include_files=["include1", "file2"],
         edit_links=False,
+        versioning="sql",
         #...
       )
 
 repo = markdown_translator.RepositoryTranslator("src-folder", "dest-folder")
 repo.update()
 ```
+
 See source code for available functions and options as it is in development.
 ## Tests
 

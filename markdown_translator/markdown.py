@@ -1,12 +1,12 @@
 import mistletoe
 from mistletoe.markdown_renderer import MarkdownRenderer
 import subprocess
-import hashlib
 import pathlib
 import os
 from .translators import translate_deepl
 from .renderers import CodeDisabledHTMLRenderer
 from .configuration import config
+from .markdown_blocks import MarkdownBlocks
 
 class Markdown:
     """
@@ -20,32 +20,34 @@ class Markdown:
     >>> markdown_obj.translate(lang_to="FR", lang_from="EN")
     >>> markdown_obj.update(new_version, lang_to="FR")
     >>>
-    >>> block_hash = markdown_obj.hashes[0]
-    >>> markdown_obj[block_hash] = "Title replacement"
+    >>> block_hash = markdown_obj.blocks.hashes[0]
+    >>> markdown_obj.blocks[block_hash] = "Title replacement"
     >>> markdown_obj.save("filename.md")
     """
-    def __init__(self, text="", filename="", hashes=[]):
-        self.blocks = {}
-        self.hashes = []
+    def __init__(self, text="", filename="", restore_hashes=False):
+        self.blocks = MarkdownBlocks()
         self.filename = pathlib.Path(filename)
 
         if self.filename.is_file():
             text = self.filename.read_text()
 
         self._split_markdown(text.strip())
-        if hashes:
-            self._initialize_hashes(hashes)
+        if restore_hashes:
+            old_hashes = config.hashes_adapter.get(filename)
+            self.blocks.refresh_hashes(old_hashes)
 
     def save(self, filename=None):
-        """Render markdown content into a file."""
+        """ Render markdown content into a file and store hashes. """
         if filename is None:
             filename = self.filename
         filename = pathlib.Path(filename)
         filename.parent.mkdir(parents=True, exist_ok=True)
         filename.write_text(str(self) + "\n")
+        config.hashes_adapter.set(str(filename), self.blocks.hashes)
 
     def delete(self):
         self.filename.unlink(missing_ok=True)
+        config.hashes_adapter.delete(self.filename)
 
     def translate(self, lang_to, lang_from=None):
         """
@@ -57,32 +59,29 @@ class Markdown:
         See translators.py for available tools.
         """
         html_translation = translate_deepl(self.html, lang_to, lang_from)
+        hashes_backup = self.blocks.hashes
+        self._split_markdown(self.html_to_markdown(html_translation))
 
-        markdown_conversion = self.__class__(
-                                    self.html_to_markdown(html_translation),
-                                    hashes=self.hashes,
-                                        )
-        self.blocks.update(markdown_conversion.blocks)
+        # Keep same hashes from the untranslated version
+        self.blocks.refresh_hashes(hashes_backup)
+
         self._edit_links(lang_to)
 
     def update(self, new_version, lang_to, lang_from=None):
         """ Update a translated markdown file with its new version. """
         # Retrieve modified content to translate only these blocks
-        if (diff_translations := new_version - self) is None:
+        if (diff_blocks := new_version.blocks - self.blocks) is None:
             return
+        diff_translations = __class__(str(diff_blocks))
         diff_translations.translate(lang_to, lang_from)
 
-        # Start from the number of blocks of the new version, add translated content
+        # Start from a non-translated state of the new version,
+        # then recover old unchanged translations and add new ones.
         new_blocks = new_version.blocks.copy()
-        new_blocks.update(diff_translations.blocks)
-
-        # Retrieve already translated content of the old version
-        for hash in new_blocks.keys():
-            if hash in self.hashes:
-                new_blocks[hash] = self[hash]
+        new_blocks.pick_translations(self.blocks)
+        new_blocks.pick_translations(diff_translations.blocks)
 
         self.blocks = new_blocks
-        self.hashes = new_version.hashes
 
     def standardize(self):
         """
@@ -101,7 +100,7 @@ class Markdown:
         module_dir = os.path.dirname(os.path.abspath(__file__))
         js_file = os.path.join(module_dir, 'html-converter.js')
 
-        # Call javscript library with node to convert html in markdown
+        # Call javascript library with node to convert html in markdown
         converter = subprocess.Popen(['node', js_file], \
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
         markdown, _ = converter.communicate(input=html_text)
@@ -117,29 +116,14 @@ class Markdown:
             renderer = CodeDisabledHTMLRenderer
         return mistletoe.markdown(str(self), renderer)
 
-    def _initialize_hashes(self, hashes):
-        """ Replace blocks hashes with a new set (for translated files). """
-        if len(self.blocks) != len(hashes):
-            err_msg = f"{self.filename} Hash error: "
-            err_msg += "having {} block, {} hashes to setup."
-            raise Exception(err_msg.format(len(self.blocks), len(hashes)))
-
-        refreshed_blocks = {}
-        for new_hash, content in zip(hashes, self.blocks.values()):
-            refreshed_blocks[new_hash] = content
-        self.blocks = refreshed_blocks
-
     def _split_markdown(self, markdown_text):
         """ Parse markdown content to divide into blocks, by title, paragraph... """
-        self.blocks = {}
-        self.hashes = []
+        self.blocks.clean()
 
         ast = mistletoe.Document(markdown_text)
         for block in ast.children:
             block_content = self._ast_render(block)
-            block_hash = hashlib.md5(block_content.encode()).hexdigest()
-            self.blocks[block_hash] = block_content
-            self.hashes.append(block_hash)
+            self.blocks.add(block_content)
 
     def _edit_links(self, extension):
         """
@@ -150,7 +134,7 @@ class Markdown:
         """
         # Transform markdown blocks into ast to edit links inside it.
         for hash in self.blocks:
-            block_ast = mistletoe.Document(self[hash])
+            block_ast = mistletoe.Document(self.blocks[hash])
             self._edit_ast_links(block_ast, extension)
             self.blocks[hash] = self._ast_render(block_ast)
 
@@ -178,25 +162,5 @@ class Markdown:
         with MarkdownRenderer() as renderer:
             return renderer.render(ast).strip()
 
-    def _hashes_render(self, hash_list):
-        return "\n\n".join(self[hash] for hash in hash_list)
-
-    def __getitem__(self, block_hash):
-        return self.blocks.get(block_hash)
-
-    def __setitem__(self, block_hash, new_content):
-        if block_hash not in self.hashes:
-            self.hashes.append(block_hash)
-        self.blocks[block_hash] = new_content
-
-    def __sub__(self, old_version):
-        diff_hashes = set(self.hashes) - set(old_version.hashes)
-        if len(diff_hashes) == 0:
-            return None
-        return Markdown(self._hashes_render(diff_hashes))
-
-    def __eq__(self, other):
-        return self.hashes == other.hashes
-
     def __str__(self):
-        return self._hashes_render(self.hashes)
+        return str(self.blocks)

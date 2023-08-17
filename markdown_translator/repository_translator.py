@@ -8,42 +8,36 @@ class RepositoryTranslator:
     repository or folder. Replicate repository architecture in translated
     folders.
 
-    Warning: Do not manipulate translation folder for versioning, prefer copies.
+    Warning: Do not manipulate translation folders for versioning, prefer copies.
 
     Usage example:
     >>> # Selected languages are defined in settings
     >>> RepositoryTranslator("src_folder", "dest_folder").update()
     """
-    BACKUP_DIRECTORY = "backup"
-    TRANSLATIONS_DIRECTORY = "translations"
-
     def __init__(self, source, destination):
         self.source = pathlib.Path(source)
         self.destination = pathlib.Path(destination)
-        self.backup_folder = self.destination / self.BACKUP_DIRECTORY
-        self.translations_folder =  self.destination / self.TRANSLATIONS_DIRECTORY
+
+        self.destination.mkdir(parents=True, exist_ok=True)
+        config.set_hashes_adapter(self.destination)
 
         self.files = []
         self._collect_files()
 
     def update(self):
         """ Generates versioned translations from the source folder. """
-        for file_infos in self.files:
-            if file_infos["backup"] == file_infos["origin"]:
-                continue
-
+        for file_collection in self.files:
             for lang in config.DEST_LANG:
-                file_infos[lang].update(
-                                file_infos["origin"],
+                file_collection[lang].update(
+                                file_collection["origin"],
                                 lang_to=lang,
                                 lang_from=config.SOURCE_LANG
                                 )
+                # Create a log function ? Could check if no edition was done to avoid print
                 if config.VERBOSE:
-                    path = file_infos["origin"].filename
+                    path = file_collection["origin"].filename
                     print(f"{lang} translated: {path.relative_to(self.source)}")
 
-            file_infos["backup"].blocks = file_infos["origin"].blocks
-            file_infos["backup"].hashes = file_infos["origin"].hashes
         self._save_translations()
 
     def _collect_files(self):
@@ -54,17 +48,14 @@ class RepositoryTranslator:
         for file in self._discover(self.source, absolute=True):
             relative_source = file.relative_to(self.source)
 
-            file_infos = {
-                "origin" : Markdown(filename=file),
-                "backup" : Markdown(filename=self.backup_folder / relative_source),
-                }
+            file_collection = {"origin": Markdown(filename=file)}
             for lang in config.DEST_LANG:
-                translation = self.translations_folder / lang / relative_source
-                file_infos[lang] = Markdown(
+                translation = self.destination / lang / relative_source
+                file_collection[lang] = Markdown(
                     filename=translation,
-                    hashes=file_infos["backup"].hashes if translation.exists() else [],
+                    restore_hashes=True,
                         )
-            self.files.append(file_infos)
+            self.files.append(file_collection)
 
     def _discover(self, folder, absolute=False):
         """
@@ -78,6 +69,8 @@ class RepositoryTranslator:
 
     @staticmethod
     def _valid_file(file):
+        ## Verfiy/add folder exclusion
+        ## TO ADD: Exclude language folders.
         if not file.is_file() or file.name in config.EXCLUDE_FILES:
             return False
         return file.suffix == ".md" or file.name in config.INCLUDE_FILES
@@ -86,16 +79,15 @@ class RepositoryTranslator:
         if config.KEEP_CLEAN:
             self._clean()
 
-        for file_infos in self.files:
-            file_infos["backup"].save()
+        for file_collection in self.files:
             for lang in config.DEST_LANG:
-                file_infos[lang].save()
+                file_collection[lang].save()
 
     def _clean(self):
         """ Delete untracked files and folders from a previous version. """
-        managed_folders = [self.backup_folder]
+        managed_folders = []
         for lang in config.DEST_LANG:
-            managed_folders.append(self.translations_folder / lang)
+            managed_folders.append(self.destination / lang)
 
         for folder in managed_folders:
             # Remove files available only in a previous version
