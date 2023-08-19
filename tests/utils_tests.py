@@ -1,3 +1,4 @@
+import decorator
 import pytest
 from pathlib import Path
 from markdown_translator import translators
@@ -46,18 +47,16 @@ def translation_hook(html, *args, **kwargs):
 
 def disable_translation(test_func):
     """ Hook to avoid API calls during testing. """
-    @pytest.mark.usefixtures("request")
-    def wrapper(request, *args, **kwargs):
-        # Access tests fixtures
-        tmp_path = request.getfixturevalue('tmp_path')
-
-        # Backup of the original translation function
+    def wrapper(test_func, *args, **kwargs):
+        # Switch (and backup) of the original translation function
         translation_function = translators.translate_deepl.__code__
-
-        # Run the test with translation disabled and re-enabled
         translators.translate_deepl.__code__ = translation_hook.__code__
-        result = test_func(tmp_path)
+
+        # Run test
+        result = test_func(*args, **kwargs)
+
+        # Restore translation function
         translators.translate_deepl.__code__ = translation_function
 
         return result
-    return wrapper
+    return decorator.decorator(wrapper, test_func)

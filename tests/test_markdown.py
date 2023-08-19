@@ -6,7 +6,6 @@ import json
 
 # To test :
 # - diff of markdown, without any diff.
-# - Fix test for updates (+ test versioning mecanism more globally)
 
 @pytest.mark.parametrize("mode", [
     "json",
@@ -293,9 +292,8 @@ def test_markdown_translate():
     assert first_hash == final_hash
 
 def test_markdown_basic_update():
-    ### TEST NOT WORKING PROPERLY, RESTORE_HASHES not possible
     old_backup = Markdown(text="# An easy title")
-    old_translated = Markdown(text="# Un titre facile", restore_hashes=True)
+    old_translated = Markdown(text="# Un titre facile")
     new_version = Markdown(text="# An easy title\nFirst paragraph\n")
 
     old_translated.update(new_version, lang_to="fr", lang_from="en")
@@ -309,8 +307,6 @@ def test_markdown_basic_update():
     assert old_translated.blocks.hashes == new_version.blocks.hashes
 
 def test_markdown_complex_update():
-    ### TEST NOT WORKING PROPERLY, RESTORE_HASHES not possible
-
     old_backup_content = """
 # Title 1
 
@@ -325,8 +321,6 @@ Paragraph 2.
 Paragraph 3.
 """
     new_version_content = """
-# Title 1
-
 Paragraph 1.
 
 ## Title 2, content
@@ -354,7 +348,6 @@ Paragraphe 3.
     """
 
     expected_blocks = {
-        "96ef59a579862bb37868bde6dadebd1b": "# Titre 1",
         "f03a9182f03bc6e40707c350729da1a5": "Paragraphe 1.",
         "865377abeddbce4cb60992aebfb919ea": "## Titre 2, contenu",
         "6c6d57475b638bd0f2e65c081bae817f": "Paragraphe 2.",

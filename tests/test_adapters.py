@@ -1,5 +1,5 @@
 import markdown_translator
-from markdown_translator import RepositoryTranslator
+from markdown_translator import RepositoryTranslator, config
 from markdown_translator.hashes_adapters import *
 from utils_tests import *
 
@@ -44,6 +44,25 @@ def test_adapters_basic(tmp_path, adapter_class):
     adapter.delete(filename)
     result_hashes_deleted = adapter.get(filename)
     assert result_hashes_deleted == None
+
+@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
+def test_adapters_multi_hashes(tmp_path, adapter_class):
+    adapter = adapter_class(tmp_path)
+
+    # Store multiple files with hashes
+    hash_list = []
+    for number in range(10):
+        filename = f"somefile-{number}"
+        hash_list.append(f"hash-{number}")
+        adapter.set(filename, hash_list.copy())
+
+    # Control stored hashes
+    reference_hashes = []
+    for number in range(10):
+        filename = f"somefile-{number}"
+        reference_hashes.append(f"hash-{number}")
+        result_hashes = adapter.get(filename)
+        assert result_hashes == reference_hashes
 
 @pytest.mark.parametrize("adapter_class", [
     BlockHashesJSONAdapter,
