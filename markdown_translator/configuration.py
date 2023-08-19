@@ -38,14 +38,17 @@ class Configuration:
         """ Retrieve all available configuration settings. """
         return self.__dict__
 
-    def set_hashes_adapter(self, folder):
-        """ Configure adapter to store hashes of translated files. """
-        available_adapters = {
+    @property
+    def adapters_list(self):
+        return {
             "json" : BlockHashesJSONAdapter,
             "sql" : BlockHashesSQLAdapter,
             }
+
+    def set_hashes_adapter(self, folder):
+        """ Configure adapter to store hashes of translated files. """
         if self.VERSIONING is not None:
-            adapter = available_adapters.get(self.VERSIONING.lower())
+            adapter = self.adapters_list.get(self.VERSIONING.lower())
         if callable(adapter):
             self.hashes_adapter = adapter(folder)
 
