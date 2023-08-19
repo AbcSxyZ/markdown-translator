@@ -30,6 +30,7 @@ With a nice paragraph.
     md = Markdown(text=content)
     md.save(markdown_file)
     assert markdown_file.exists()
+    assert str(md.filename) == str(markdown_file)
 
     # Control save tests
     saved_hashes = config.hashes_adapter.get(str(markdown_file))

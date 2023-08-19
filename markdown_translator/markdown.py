@@ -38,12 +38,11 @@ class Markdown:
 
     def save(self, filename=None):
         """ Render markdown content into a file and store hashes. """
-        if filename is None:
-            filename = self.filename
-        filename = pathlib.Path(filename)
-        filename.parent.mkdir(parents=True, exist_ok=True)
-        filename.write_text(str(self) + "\n")
-        config.hashes_adapter.set(str(filename), self.blocks.hashes)
+        if filename is not None:
+            self.filename = pathlib.Path(filename)
+        self.filename.parent.mkdir(parents=True, exist_ok=True)
+        self.filename.write_text(str(self) + "\n")
+        config.hashes_adapter.set(str(self.filename), self.blocks.hashes)
 
     def delete(self):
         self.filename.unlink(missing_ok=True)
