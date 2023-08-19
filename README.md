@@ -35,12 +35,12 @@ markdown_text = """
 This is a paragraph with content to translate.
 """
 
-markdown_translator.config(deepl_key=DEEPL_KEY)
+markdown_translator.config(deepl_key="YOUR-DEEPL-KEY")
 
-markdown_obj = markdown_translator.Markdown(markdown_text)
-markdown_obj.translate(lang_to="FR", lang_from="EN")
-markdown_obj.save("translated-text.md")
-print(markdown_obj)
+source_md = markdown_translator.Markdown(markdown_text)
+translated_md = source_md.translate(lang_to="FR", lang_from="EN")
+translated_md.save("translated-text.md")
+print(translated_md)
 ```
 To update an existing translated file:
 ```python

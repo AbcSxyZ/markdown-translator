@@ -14,15 +14,6 @@ class Markdown:
     tree. Possibility to update translated files to use with versioning.
 
     Split content into blocks manipulable blocks, based on hashes.
-
-    Usage examples:
-    >>> markdown_obj = Markdown("## Good title")
-    >>> markdown_obj.translate(lang_to="FR", lang_from="EN")
-    >>> markdown_obj.update(new_version, lang_to="FR")
-    >>>
-    >>> block_hash = markdown_obj.blocks.hashes[0]
-    >>> markdown_obj.blocks[block_hash] = "Title replacement"
-    >>> markdown_obj.save("filename.md")
     """
     def __init__(self, text="", filename="", restore_hashes=False):
         self.blocks = MarkdownBlocks()
@@ -58,27 +49,26 @@ class Markdown:
         See translators.py for available tools.
         """
         html_translation = translate_deepl(self.html, lang_to, lang_from)
-        hashes_backup = self.blocks.hashes
-        self._split_markdown(self.html_to_markdown(html_translation))
+        translated_md = Markdown(self.html_to_markdown(html_translation))
 
         # Keep same hashes from the untranslated version
-        self.blocks.refresh_hashes(hashes_backup)
+        translated_md.blocks.refresh_hashes(self.blocks.hashes)
 
-        self._edit_links(lang_to)
+        translated_md._edit_links(lang_to)
+        return translated_md
 
     def update(self, new_version, lang_to, lang_from=None):
         """ Update a translated markdown file with its new version. """
         # Retrieve modified content to translate only these blocks
         if (diff_blocks := new_version.blocks - self.blocks) is None:
             return
-        diff_translations = __class__(str(diff_blocks))
-        diff_translations.translate(lang_to, lang_from)
+        translations = __class__(str(diff_blocks)).translate(lang_to, lang_from)
 
         # Start from a non-translated state of the new version,
         # then recover old unchanged translations and add new ones.
         new_blocks = new_version.blocks.copy()
         new_blocks.pick_translations(self.blocks)
-        new_blocks.pick_translations(diff_translations.blocks)
+        new_blocks.pick_translations(translations.blocks)
 
         self.blocks = new_blocks
 

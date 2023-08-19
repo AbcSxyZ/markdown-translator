@@ -283,13 +283,13 @@ def test_markdown_translate():
         "d766839ca6ea342eb05dba1ce81d1c86": "# Un titre facile"
         }
 
-    md = Markdown(text=content)
+    origin_md = Markdown(text=content)
 
-    first_hash = md.blocks.hashes[0]
-    md.translate(lang_to="fr")
-    final_hash = md.blocks.hashes[0]
+    first_hash = origin_md.blocks.hashes[0]
+    translated_md = origin_md.translate(lang_to="fr")
+    final_hash = translated_md.blocks.hashes[0]
 
-    assert md.blocks.childrens == expected_blocks
+    assert translated_md.blocks.childrens == expected_blocks
     assert first_hash == final_hash
 
 def test_markdown_basic_update():
