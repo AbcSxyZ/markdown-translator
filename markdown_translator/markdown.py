@@ -146,6 +146,9 @@ class Markdown:
             if ast_token.target.startswith(exclude_url): return False
         return True
 
+    def is_updated(self):
+        return config.hashes_adapter.get(str(self.filename)) == self.blocks.hashes
+
     @staticmethod
     def _ast_render(ast):
         with MarkdownRenderer() as renderer:

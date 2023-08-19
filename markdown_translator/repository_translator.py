@@ -21,41 +21,31 @@ class RepositoryTranslator:
         self.destination.mkdir(parents=True, exist_ok=True)
         config.set_hashes_adapter(self.destination)
 
-        self.files = []
-        self._collect_files()
-
     def update(self):
         """ Generates versioned translations from the source folder. """
-        for file_collection in self.files:
+        if config.KEEP_CLEAN:
+            self._clean()
+
+        # Explore all mardown files from the source repository
+        for source_path in self._discover(self.source, absolute=True):
+            source_md = Markdown(filename=source_path)
+            relative_source = source_path.relative_to(self.source)
+
+            # Retrieve and update translations of the file in each language
             for lang in config.DEST_LANG:
-                file_collection[lang].update(
-                                file_collection["origin"],
+                translated_md = Markdown(
+                    filename=self.destination / lang / relative_source,
+                    restore_hashes=True,
+                        )
+                translated_md.update(
+                                source_md,
                                 lang_to=lang,
                                 lang_from=config.SOURCE_LANG
                                 )
-                # Create a log function ? Could check if no edition was done to avoid print
-                if config.VERBOSE:
-                    path = file_collection["origin"].filename
-                    print(f"{lang} translated: {path.relative_to(self.source)}")
+                if config.VERBOSE and translated_md.is_updated():
+                    print(f"{lang} translated: {relative_source}")
 
-        self._save_translations()
-
-    def _collect_files(self):
-        """
-        Retrieve all the files to be translated from the source folder with
-        their corresponding translation files, either existing or supposed.
-        """
-        for file in self._discover(self.source, absolute=True):
-            relative_source = file.relative_to(self.source)
-
-            file_collection = {"origin": Markdown(filename=file)}
-            for lang in config.DEST_LANG:
-                translation = self.destination / lang / relative_source
-                file_collection[lang] = Markdown(
-                    filename=translation,
-                    restore_hashes=True,
-                        )
-            self.files.append(file_collection)
+                translated_md.save()
 
     def _discover(self, folder, absolute=False):
         """
@@ -74,14 +64,6 @@ class RepositoryTranslator:
         if not file.is_file() or file.name in config.EXCLUDE_FILES:
             return False
         return file.suffix == ".md" or file.name in config.INCLUDE_FILES
-
-    def _save_translations(self):
-        if config.KEEP_CLEAN:
-            self._clean()
-
-        for file_collection in self.files:
-            for lang in config.DEST_LANG:
-                file_collection[lang].save()
 
     def _clean(self):
         """ Delete untracked files and folders from a previous version. """
