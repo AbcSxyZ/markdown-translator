@@ -85,10 +85,7 @@ class RepositoryTranslator:
 
     def _clean(self):
         """ Delete untracked files and folders from a previous version. """
-        managed_folders = []
-        for lang in config.DEST_LANG:
-            managed_folders.append(self.destination / lang)
-
+        managed_folders = [self.destination / lang for lang in config.DEST_LANG]
         for folder in managed_folders:
             # Remove files available only in a previous version
             delete_list = self._discover(folder) - self._discover(self.source)
