@@ -19,10 +19,7 @@ def test_adapters_parent_class(tmp_path):
     result_hashes_deleted = adapter.get(filename)
     assert result_hashes_deleted == None
 
-@pytest.mark.parametrize("adapter_class", [
-    BlockHashesJSONAdapter,
-    BlockHashesSQLAdapter,
-])
+@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
 def test_adapters_basic(tmp_path, adapter_class):
     # Configuration
     filename = "somefile.md"
@@ -64,10 +61,7 @@ def test_adapters_multi_hashes(tmp_path, adapter_class):
         result_hashes = adapter.get(filename)
         assert result_hashes == reference_hashes
 
-@pytest.mark.parametrize("adapter_class", [
-    BlockHashesJSONAdapter,
-    BlockHashesSQLAdapter,
-])
+@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
 def test_adapters_unexisting(tmp_path, adapter_class):
     # Configuration
     filename = "somefile.md"
@@ -83,10 +77,7 @@ def test_adapters_unexisting(tmp_path, adapter_class):
     # Test of deletion
     adapter.delete(unexisting_filename)
 
-@pytest.mark.parametrize("adapter_class", [
-    BlockHashesJSONAdapter,
-    BlockHashesSQLAdapter,
-])
+@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
 def test_adapters_persistency(tmp_path, adapter_class):
     # Configuration
     filename = "somefile.md"
@@ -101,10 +92,7 @@ def test_adapters_persistency(tmp_path, adapter_class):
     assert result_hashes == reference_hashes
 
 
-@pytest.mark.parametrize("mode", [
-    "json",
-    "sql",
-])
+@pytest.mark.parametrize("mode", config.adapters_list.keys())
 def test_repo_translator_json_adapter(tmp_path, mode):
     filename = "somefile.md"
     lang = "fr"

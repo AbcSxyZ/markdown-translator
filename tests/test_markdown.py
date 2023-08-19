@@ -7,10 +7,7 @@ import json
 # To test :
 # - diff of markdown, without any diff.
 
-@pytest.mark.parametrize("mode", [
-    "json",
-    "sql",
-])
+@pytest.mark.parametrize("mode", config.adapters_list.keys())
 def test_markdown_save_delete(create_markdown_file, mode):
     content = """# A nice title
 
