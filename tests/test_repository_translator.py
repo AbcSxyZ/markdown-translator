@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 import markdown_translator
-from markdown_translator import translators, RepositoryTranslator
+from markdown_translator import RepositoryTranslator
 from utils_tests import *
 
 @pytest.fixture(scope="module", autouse=True)

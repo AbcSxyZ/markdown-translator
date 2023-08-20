@@ -1,6 +1,6 @@
 import requests
-from .configuration import config
-from .exceptions import MarkdownTranslatorError
+from ..configuration import config
+from ..exceptions import MarkdownTranslatorError
 
 def translate_deepl(html_content, lang_to, lang_from=None):
     """
@@ -14,7 +14,7 @@ def translate_deepl(html_content, lang_to, lang_from=None):
         "Content-Type": "application/x-www-form-urlencoded",
     }
     data = {
-        "auth_key": config.DEEPL_KEY,
+        "auth_key": config.API_KEY,
         "text": html_content,
         "source_lang": lang_from,
         "target_lang": lang_to,
@@ -29,3 +29,6 @@ def translate_deepl(html_content, lang_to, lang_from=None):
         raise MarkdownTranslatorError(error_msg)
 
     return response.json()['translations'][0]['text']
+
+def translate_disabled(html, *args, **kwargs):
+    return html

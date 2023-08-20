@@ -3,7 +3,7 @@ from mistletoe.markdown_renderer import MarkdownRenderer
 import subprocess
 import pathlib
 import os
-from .translators import translate_deepl
+from . import adapters
 from .renderers import CodeDisabledHTMLRenderer
 from .configuration import config
 from .markdown_blocks import MarkdownBlocks
@@ -24,7 +24,7 @@ class Markdown:
 
         self._split_markdown(text.strip())
         if restore_hashes:
-            old_hashes = config.hashes_adapter.get(filename)
+            old_hashes = adapters.hashes.get(filename)
             self.blocks.refresh_hashes(old_hashes)
 
     def save(self, filename=None):
@@ -33,11 +33,11 @@ class Markdown:
             self.filename = pathlib.Path(filename)
         self.filename.parent.mkdir(parents=True, exist_ok=True)
         self.filename.write_text(str(self) + "\n")
-        config.hashes_adapter.set(str(self.filename), self.blocks.hashes)
+        adapters.hashes.set(str(self.filename), self.blocks.hashes)
 
     def delete(self):
         self.filename.unlink(missing_ok=True)
-        config.hashes_adapter.delete(self.filename)
+        adapters.hashes.delete(self.filename)
 
     def translate(self, lang_to, lang_from=None):
         """
@@ -48,7 +48,7 @@ class Markdown:
 
         See translators.py for available tools.
         """
-        html_translation = translate_deepl(self.html, lang_to, lang_from)
+        html_translation = adapters.translator(self.html, lang_to, lang_from)
         translated_md = Markdown(self.html_to_markdown(html_translation))
 
         # Keep same hashes from the untranslated version
@@ -147,7 +147,7 @@ class Markdown:
         return True
 
     def is_updated(self):
-        return config.hashes_adapter.get(str(self.filename)) == self.blocks.hashes
+        return adapters.hashes.get(str(self.filename)) == self.blocks.hashes
 
     @staticmethod
     def _ast_render(ast):

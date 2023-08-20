@@ -9,6 +9,9 @@ class BlockHashesAdapter:
     Translated files use hashes from their origin file to control which
     Markdown blocks were already translated.
     """
+    def __init__(self, folder="."):
+        pass
+        
     def set(self, file_name, hashes):
         return None
 
@@ -19,7 +22,7 @@ class BlockHashesAdapter:
         return None
 
 class BlockHashesJSONAdapter(BlockHashesAdapter):
-    def __init__(self, folder):
+    def __init__(self, folder="."):
         self.filename = pathlib.Path(folder) / f"hashes.json"
         if self.filename.exists():
             self.data = json.loads(self.filename.read_text(encoding="utf-8"))
@@ -44,7 +47,7 @@ class BlockHashesJSONAdapter(BlockHashesAdapter):
             json.dump(self.data, file, indent=4)
 
 class BlockHashesSQLAdapter(BlockHashesAdapter):
-    def __init__(self, folder):
+    def __init__(self, folder="."):
         self.dbname = pathlib.Path(folder) / "hashes.db"
         self.conn = sqlite3.connect(str(self.dbname))
         self._initialize_db()

@@ -1,6 +1,6 @@
 import markdown_translator
-from markdown_translator import RepositoryTranslator, config
-from markdown_translator.hashes_adapters import *
+from markdown_translator import RepositoryTranslator, config, adapters
+from markdown_translator.adapters.hashes_adapters import *
 from utils_tests import *
 
 def test_adapters_parent_class(tmp_path):
@@ -19,7 +19,7 @@ def test_adapters_parent_class(tmp_path):
     result_hashes_deleted = adapter.get(filename)
     assert result_hashes_deleted == None
 
-@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
+@pytest.mark.parametrize("adapter_class", get_hashes_adapters())
 def test_adapters_basic(tmp_path, adapter_class):
     # Configuration
     filename = "somefile.md"
@@ -42,7 +42,7 @@ def test_adapters_basic(tmp_path, adapter_class):
     result_hashes_deleted = adapter.get(filename)
     assert result_hashes_deleted == None
 
-@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
+@pytest.mark.parametrize("adapter_class", get_hashes_adapters())
 def test_adapters_multi_hashes(tmp_path, adapter_class):
     adapter = adapter_class(tmp_path)
 
@@ -61,7 +61,7 @@ def test_adapters_multi_hashes(tmp_path, adapter_class):
         result_hashes = adapter.get(filename)
         assert result_hashes == reference_hashes
 
-@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
+@pytest.mark.parametrize("adapter_class", get_hashes_adapters())
 def test_adapters_unexisting(tmp_path, adapter_class):
     # Configuration
     filename = "somefile.md"
@@ -77,7 +77,7 @@ def test_adapters_unexisting(tmp_path, adapter_class):
     # Test of deletion
     adapter.delete(unexisting_filename)
 
-@pytest.mark.parametrize("adapter_class", config.adapters_list.values())
+@pytest.mark.parametrize("adapter_class", get_hashes_adapters())
 def test_adapters_persistency(tmp_path, adapter_class):
     # Configuration
     filename = "somefile.md"
@@ -91,9 +91,8 @@ def test_adapters_persistency(tmp_path, adapter_class):
     result_hashes = new_adapter.get(filename)
     assert result_hashes == reference_hashes
 
-
-@pytest.mark.parametrize("mode", config.adapters_list.keys())
-def test_repo_translator_json_adapter(tmp_path, mode):
+@pytest.mark.parametrize("mode", adapters.hashes.options - {"disabled"})
+def test_repo_translator_with_adapter(tmp_path, mode):
     filename = "somefile.md"
     lang = "fr"
     test_structure = {
@@ -113,6 +112,6 @@ def test_repo_translator_json_adapter(tmp_path, mode):
     repo = RepositoryTranslator(source_folder, dest_folder)
     repo.update()
 
-    result_hashes = markdown_translator.config.hashes_adapter.get(abs_filename)
+    result_hashes = adapters.hashes.get(abs_filename)
 
     assert result_hashes == expected_hashes

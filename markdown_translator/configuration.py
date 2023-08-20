@@ -2,7 +2,6 @@ import configparser
 import os
 import sys
 from .exceptions import MarkdownTranslatorError
-from .hashes_adapters import *
 
 class Configuration:
     """
@@ -13,12 +12,13 @@ class Configuration:
     """
     def __init__(self):
         # Default configuration settings
-        self.DEEPL_KEY = ""
+        self.API_KEY = ""
+        self.TRANSLATION_ENGINE = "deepl"
         self.SOURCE_LANG = ""
         self.DEST_LANG = []
 
         # Available versioning method (see adapters) : json, sql.
-        self.VERSIONING = None
+        self.VERSIONING = "disabled"
 
         self.VERBOSE = True
         self.CODE_TRANSLATED = False
@@ -29,7 +29,6 @@ class Configuration:
         self.EXCLUDE_FILES = []
         self.EXCLUDE_URLS = []
 
-        self.hashes_adapter = BlockHashesAdapter()
         self.load_ini()
         self.load_environment()
 
@@ -37,20 +36,6 @@ class Configuration:
     def values(self):
         """ Retrieve all available configuration settings. """
         return self.__dict__
-
-    @property
-    def adapters_list(self):
-        return {
-            "json" : BlockHashesJSONAdapter,
-            "sql" : BlockHashesSQLAdapter,
-            }
-
-    def set_hashes_adapter(self, folder):
-        """ Configure adapter to store hashes of translated files. """
-        if self.VERSIONING is not None:
-            adapter = self.adapters_list.get(self.VERSIONING.lower())
-        if callable(adapter):
-            self.hashes_adapter = adapter(folder)
 
     def __call__(self, **kwargs):
         """ Change any available setting of the configuration. """

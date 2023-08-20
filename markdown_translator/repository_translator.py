@@ -1,5 +1,5 @@
 import pathlib
-from markdown_translator import Markdown
+from . import adapters, Markdown
 from .configuration import config
 
 class RepositoryTranslator:
@@ -19,7 +19,7 @@ class RepositoryTranslator:
         self.destination = pathlib.Path(destination)
 
         self.destination.mkdir(parents=True, exist_ok=True)
-        config.set_hashes_adapter(self.destination)
+        adapters.hashes.select(config.VERSIONING, self.destination)
 
     def update(self):
         """ Generates versioned translations from the source folder. """

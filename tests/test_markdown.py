@@ -1,13 +1,13 @@
 import pathlib
 import pytest
-from markdown_translator import Markdown, config
+from markdown_translator import Markdown, config, adapters
 from datetime import datetime
 import json
 
 # To test :
 # - diff of markdown, without any diff.
 
-@pytest.mark.parametrize("mode", config.adapters_list.keys())
+@pytest.mark.parametrize("mode", adapters.hashes.options - {"disabled"})
 def test_markdown_save_delete(create_markdown_file, mode):
     content = """# A nice title
 
@@ -21,15 +21,14 @@ With a nice paragraph.
     markdown_file.unlink()
 
     # Perform save tests
-    config(versioning=mode)
-    config.set_hashes_adapter(markdown_file.parents[0])
+    adapters.hashes.select(mode, markdown_file.parents[0])
     md = Markdown(text=content)
     md.save(markdown_file)
     assert markdown_file.exists()
     assert str(md.filename) == str(markdown_file)
 
     # Control save tests
-    saved_hashes = config.hashes_adapter.get(str(markdown_file))
+    saved_hashes = adapters.hashes.get(str(markdown_file))
     result_content = markdown_file.read_text()
     assert result_content == content
     assert saved_hashes == reference_hashes
@@ -37,7 +36,7 @@ With a nice paragraph.
     # Perfom deletion tests
     md = Markdown(filename=markdown_file)
     md.delete()
-    saved_hashes = config.hashes_adapter.get(str(markdown_file))
+    saved_hashes = adapters.hashes.get(str(markdown_file))
     assert not markdown_file.exists()
     assert saved_hashes == None
 

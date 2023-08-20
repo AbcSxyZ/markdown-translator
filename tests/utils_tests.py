@@ -1,7 +1,7 @@
 import decorator
 import pytest
 from pathlib import Path
-from markdown_translator import translators
+from markdown_translator import config, adapters
 
 def logtest(content, context=""):
     """ Utils to debug and write tests. """
@@ -49,14 +49,21 @@ def disable_translation(test_func):
     """ Hook to avoid API calls during testing. """
     def wrapper(test_func, *args, **kwargs):
         # Switch (and backup) of the original translation function
-        translation_function = translators.translate_deepl.__code__
-        translators.translate_deepl.__code__ = translation_hook.__code__
+        configured_engine = config.TRANSLATION_ENGINE
+        config(translation_engine="disabled")
 
         # Run test
         result = test_func(*args, **kwargs)
 
         # Restore translation function
-        translators.translate_deepl.__code__ = translation_function
-
+        config(translation_engine=configured_engine)
         return result
     return decorator.decorator(wrapper, test_func)
+
+def get_hashes_adapters(include_disabled=False):
+    adapters_list = []
+    for name in adapters.hashes.options:
+        if name == "disabled" and not include_disabled:
+            continue
+        adapters_list.append(adapters.hashes._adapters_list[name])
+    return adapters_list

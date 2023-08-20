@@ -35,7 +35,7 @@ markdown_text = """
 This is a paragraph with content to translate.
 """
 
-markdown_translator.config(deepl_key="YOUR-DEEPL-KEY")
+markdown_translator.config(api_key="YOUR-API-KEY")
 
 source_md = markdown_translator.Markdown(markdown_text)
 translated_md = source_md.translate(lang_to="FR", lang_from="EN")
@@ -63,7 +63,7 @@ To manage translations of all Markdown files within a folder :
 import markdown_translator
 
 markdown_translator.config(
-        deepl_key=DEEPL_KEY,
+        api_key="YOUR-API-KEY",
         dest_lang=["fr"],
         include_files=["include1", "file2"],
         edit_links=False,
