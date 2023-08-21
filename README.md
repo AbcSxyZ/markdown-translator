@@ -46,7 +46,6 @@ To update an existing translated file:
 ```python
 # Require to enable versioning
 markdown_translator.config(versioning="sql")
-markdown_translator.config.set_hashes_adapter(".")
 
 # Perform your first translation as explained previously.
 # [first translations...]
