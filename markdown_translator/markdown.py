@@ -147,7 +147,7 @@ class Markdown:
         return True
 
     def is_updated(self):
-        return adapters.hashes.get(str(self.filename)) == self.blocks.hashes
+        return adapters.hashes.get(self.filename) != self.blocks.hashes
 
     @staticmethod
     def _ast_render(ast):
