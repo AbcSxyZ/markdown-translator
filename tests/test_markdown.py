@@ -7,6 +7,11 @@ import json
 # To test :
 # - diff of markdown, without any diff.
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_module():
+    """Global configuration for RepositoryTranslator tests."""
+    config(translation_engine="deepl")
+
 @pytest.mark.parametrize("mode", adapters.hashes.options - {"disabled"})
 def test_markdown_save_delete(create_markdown_file, mode):
     content = """# A nice title
