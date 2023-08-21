@@ -29,6 +29,7 @@ class RepositoryTranslator:
         # Explore all mardown files from the source repository
         for source_path in self._discover(self.source, absolute=True):
             source_md = Markdown(filename=source_path)
+            source_md.standardize()
             relative_source = source_path.relative_to(self.source)
 
             # Retrieve and update translations of the file in each language

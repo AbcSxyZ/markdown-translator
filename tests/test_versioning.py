@@ -1,4 +1,5 @@
-from markdown_translator import Markdown, config, adapters
+import markdown_translator
+from markdown_translator import Markdown, adapters, RepositoryTranslator
 from utils_tests import *
 
 @disable_translation
@@ -171,4 +172,59 @@ A paragraph
 
     translated_md.update(new_version, lang_to="fr", lang_from="en")
 
+    assert translated_md.blocks.childrens == expected_blocks
+
+@disable_translation
+@pytest.mark.parametrize("mode", adapters.hashes.options - {"disabled"})
+def test_versioning_standardized(tmp_path, create_markdown_file, mode):
+    update_content = """
+First title
+===========
+
++ A list
+
+Second title updated
+----------------
+    """
+    backup_translation = {
+        "378cc1d0bb9779ff6c7ee1bffae4571b": "# First title [translated]",
+        "e5cc3ab82f1a30ad26090d480b04714b": "* A list [translated]",
+        "c64528a60571e4fd165cf97f212e7be2": "## Second title [translated]",
+    }
+    expected_blocks = {
+        "378cc1d0bb9779ff6c7ee1bffae4571b": "# First title [translated]",
+        "e5cc3ab82f1a30ad26090d480b04714b": "* A list [translated]",
+        "dd6c68887a8306bc38ca2a9815639f5e": "## Second title updated",
+    }
+
+    test_structure = {
+        'somefile.md': update_content,
+    }
+
+    ## Prepare base file for testing
+    # Settings
+    lang = "fr"
+    source_folder = tmp_path / "source"
+    dest_folder = tmp_path / "destination"
+    translation_path = dest_folder / lang / "somefile.md"
+
+    dest_folder.mkdir()
+    adapters.hashes.select(mode, dest_folder)
+
+    # Create source folder for RepositoryTranslator
+    create_structure(source_folder, test_structure)
+
+    # Create old translation
+    translation_path_content = "\n\n".join(backup_translation.values())
+    create_markdown_file(translation_path_content, path=translation_path)
+    adapters.hashes.set(translation_path, list(backup_translation.keys()))
+
+    hashes = adapters.hashes.get(translation_path)
+
+    ## Perform test action
+    markdown_translator.config(dest_lang=[lang])
+    RepositoryTranslator(source_folder, dest_folder).update()
+
+    ## Control results
+    translated_md = Markdown(filename=translation_path, restore_hashes=True)
     assert translated_md.blocks.childrens == expected_blocks
