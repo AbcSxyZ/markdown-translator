@@ -15,28 +15,33 @@ class Markdown:
 
     Split content into blocks manipulable blocks, based on hashes.
     """
-    def __init__(self, text="", filename="", restore_hashes=False):
+    def __init__(self, text="", filename="", directory=".", restore_hashes=False):
         self.blocks = MarkdownBlocks()
-        self.filename = pathlib.Path(filename)
+        # Filename could be relative to directory, path ensure file access
+        self.filename = self.path = pathlib.Path(filename)
+        if directory != ".":
+            self.path = directory / self.filename
 
-        if self.filename.is_file():
-            text = self.filename.read_text()
+        if self.path.is_file():
+            text = self.path.read_text()
 
         self._split_markdown(text.strip())
         if restore_hashes:
-            old_hashes = adapters.hashes.get(filename)
+            old_hashes = adapters.hashes.get(self.filename)
             self.blocks.refresh_hashes(old_hashes)
 
-    def save(self, filename=None):
+    def save(self, filename=None, save_hashes=True):
         """ Render markdown content into a file and store hashes. """
         if filename is not None:
-            self.filename = pathlib.Path(filename)
-        self.filename.parent.mkdir(parents=True, exist_ok=True)
-        self.filename.write_text(str(self) + "\n")
-        adapters.hashes.set(str(self.filename), self.blocks.hashes)
+            self.filename = self.path = pathlib.Path(filename)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(str(self) + "\n")
+
+        if save_hashes:
+            adapters.hashes.set(self.filename, self.blocks.hashes)
 
     def delete(self):
-        self.filename.unlink(missing_ok=True)
+        self.path.unlink(missing_ok=True)
         adapters.hashes.delete(self.filename)
 
     def translate(self, lang_to, lang_from=None):

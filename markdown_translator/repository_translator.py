@@ -35,7 +35,8 @@ class RepositoryTranslator:
             # Retrieve and update translations of the file in each language
             for lang in config.DEST_LANG:
                 translated_md = Markdown(
-                    filename=self.destination / lang / relative_source,
+                    filename=relative_source,
+                    directory=self.destination / lang,
                     restore_hashes=True,
                         )
                 translated_md.update(
@@ -46,7 +47,8 @@ class RepositoryTranslator:
                 if config.VERBOSE and translated_md.is_updated():
                     print(f"{lang} translated: {relative_source}")
 
-                translated_md.save()
+                translated_md.save(save_hashes=False)
+            adapters.hashes.set(relative_source, source_md.blocks.hashes)
 
     def _discover(self, folder, absolute=False):
         """

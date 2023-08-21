@@ -105,13 +105,12 @@ def test_repo_translator_with_adapter(tmp_path, mode):
 
     source_folder = tmp_path / "source"
     dest_folder = tmp_path / "destination"
-    abs_filename = str(dest_folder / lang / filename)
     create_structure(str(source_folder), test_structure)
 
     markdown_translator.config(dest_lang=[lang], versioning=mode)
     repo = RepositoryTranslator(source_folder, dest_folder)
     repo.update()
 
-    result_hashes = adapters.hashes.get(abs_filename)
+    result_hashes = adapters.hashes.get(filename)
 
     assert result_hashes == expected_hashes

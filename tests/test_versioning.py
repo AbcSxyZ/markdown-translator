@@ -217,14 +217,15 @@ Second title updated
     # Create old translation
     translation_path_content = "\n\n".join(backup_translation.values())
     create_markdown_file(translation_path_content, path=translation_path)
-    adapters.hashes.set(translation_path, list(backup_translation.keys()))
-
-    hashes = adapters.hashes.get(translation_path)
+    adapters.hashes.set("somefile.md", list(backup_translation.keys()))
 
     ## Perform test action
     markdown_translator.config(dest_lang=[lang])
     RepositoryTranslator(source_folder, dest_folder).update()
 
     ## Control results
-    translated_md = Markdown(filename=translation_path, restore_hashes=True)
+    translated_md = Markdown(
+            filename="somefile.md",
+            directory=dest_folder / lang,
+            restore_hashes=True)
     assert translated_md.blocks.childrens == expected_blocks
