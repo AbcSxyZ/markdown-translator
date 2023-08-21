@@ -30,10 +30,7 @@ class MarkdownBlocks:
     def refresh_hashes(self, selected_hashes):
         """ Replace blocks hashes with a new set. """
         if selected_hashes is None: return
-
-        if len(self.hashes) != len(selected_hashes):
-            err_msg = "Hash error: start wih {} hashes, updating {} hashes."
-            raise Exception(err_msg.format(len(self), len(selected_hashes)))
+        if len(self.hashes) != len(selected_hashes): return
 
         refreshed_blocks = {}
         for old_hash, new_hash in zip(self.hashes, selected_hashes):
