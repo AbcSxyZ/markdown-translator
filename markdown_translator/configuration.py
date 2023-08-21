@@ -40,38 +40,53 @@ class Configuration:
     def __call__(self, **kwargs):
         """ Change any available setting of the configuration. """
         for key, value in kwargs.items():
-            self._setattr(key.upper(), self._parse_value(value))
+            self._setattr(key, value)
 
     def load_ini(self, ini_path='translations.ini'):
         parser = configparser.ConfigParser()
         parser.read(ini_path)
         for key, value in parser.items('settings'):
-            self._setattr(key.upper(), self._parse_value(value))
+            self._setattr(key, value)
 
     def load_environment(self):
         for key, value in os.environ.items():
-            key = key.upper()
-            if hasattr(self, key):
-                self._setattr(key, self._parse_value(value))
-
-    def _parse_value(self, value):
-        """ Convert a setting value to a list or boolean if applicable."""
-        if isinstance(value, str):
-            if ',' in value:
-                value = [item.strip() for item in value.split(',')]
-            elif value.lower() == 'true':
-                value = True
-            elif value.lower() == 'false':
-                value = False
-        return value
+            if hasattr(self, key.upper()):
+                self._setattr(key, value)
 
     def _setattr(self, attribute, value):
         """Set an attribute, ensuring that lists do not contain empty strings."""
         attribute = attribute.upper()
         if not hasattr(self, attribute):
-            raise MarkdownTranslatorError(f"Invalid configuration : {attribute}")
-        if isinstance(value, list):
-            value = [item for item in value if item != ""]
-        setattr(self, attribute, self._parse_value(value))
+            raise MarkdownTranslatorError(f"Unexisting configuration : {attribute}")
+            
+        try:
+            attribute_type = type(getattr(self, attribute))
+            value = self._parse_value(value, attribute_type)
+            setattr(self, attribute, value)
+        except MarkdownTranslatorError:
+            raise MarkdownTranslatorError(f"Invalid configuration for {attribute}: {value}")
+
+    def _parse_value(self, value, attribute_type):
+        """ Convert a value to the expected type of the setting."""
+        if type(value) == attribute_type:
+            return value
+        elif type(value) != str:
+            raise MarkdownTranslatorError
+
+        if attribute_type == bool:
+            return self._get_boolean(value)
+        elif attribute_type == list:
+            return [item.strip() for item in value.split(',')] if value else []
+
+    @staticmethod
+    def _get_boolean(value):
+        true_values = ["true", "1", "yes", "on"]
+        false_values = ["false", "0", "no", "off"]
+
+        if value.lower() in true_values:
+            return True
+        elif value.lower() in false_values:
+            return False
+        raise MarkdownTranslatorError
 
 config = Configuration()
