@@ -33,7 +33,7 @@ With a nice paragraph.
     assert str(md.filename) == str(markdown_file)
 
     # Control save tests
-    saved_hashes = adapters.hashes.get(str(markdown_file))
+    saved_hashes = adapters.hashes.get(markdown_file)
     result_content = markdown_file.read_text()
     assert result_content == content
     assert saved_hashes == reference_hashes
@@ -41,7 +41,7 @@ With a nice paragraph.
     # Perfom deletion tests
     md = Markdown(filename=markdown_file)
     md.delete()
-    saved_hashes = adapters.hashes.get(str(markdown_file))
+    saved_hashes = adapters.hashes.get(markdown_file)
     assert not markdown_file.exists()
     assert saved_hashes == None
 
