@@ -32,8 +32,7 @@ class MarkdownBlocks:
         if selected_hashes is None: return
 
         if len(self.hashes) != len(selected_hashes):
-            err_msg = f"{self.filename} Hash error: "
-            err_msg += "start wih {} hashes, updating {} hashes."
+            err_msg = "Hash error: start wih {} hashes, updating {} hashes."
             raise Exception(err_msg.format(len(self), len(selected_hashes)))
 
         refreshed_blocks = {}
