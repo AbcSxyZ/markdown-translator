@@ -50,21 +50,25 @@ class RepositoryTranslator:
                 translated_md.save(save_hashes=False)
             adapters.hashes.set(relative_source, source_md.blocks.hashes)
 
-    def _discover(self, folder, absolute=False):
+    def _discover(self, folder, absolute=False, is_traduction=False):
         """
         List all filenames from a folders (source folder, backup, translations...)
         on which the RepositoryTranslator will perform manipulations.
         """
-        tracked_files = {file for file in folder.rglob("*") if self._valid_file(file)}
-        if not absolute:
-            tracked_files = {file.relative_to(folder) for file in tracked_files}
-        return tracked_files
+        required_files = []
+        for file in folder.rglob("*"):
+            if self._valid_file(file, is_traduction):
+                required_files.append(file)
 
-    def _valid_file(self, file):
-        ## Verfiy/add folder exclusion
-        ## TO ADD: Exclude language folders.
-        if not file.is_file() or self._contained(file, config.EXCLUDE_FILES):
-            return False
+        if not absolute:
+            required_files = [file.relative_to(folder) for file in required_files]
+        return set(required_files)
+
+    def _valid_file(self, file, is_traduction):
+        if not is_traduction and self._contained(file, config.DEST_LANG): return False
+        if self._contained(file, config.EXCLUDE_FILES): return False
+        if not file.is_file(): return False
+
         return file.suffix == ".md" or self._contained(file, config.INCLUDE_FILES)
 
     @staticmethod
@@ -86,7 +90,8 @@ class RepositoryTranslator:
         managed_folders = [self.destination / lang for lang in config.DEST_LANG]
         for folder in managed_folders:
             # Remove files available only in a previous version
-            delete_list = self._discover(folder) - self._discover(self.source)
+            delete_list = self._discover(folder, is_traduction=True) - \
+                                                    self._discover(self.source)
             for unwanted_file in delete_list:
                 pathlib.Path(folder / unwanted_file).unlink()
 

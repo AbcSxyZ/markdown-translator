@@ -315,6 +315,55 @@ def test_repo_translator_mix_include_exclude_folders(tmp_path):
     result_structure = convert_to_dict(dest_folder)
     assert result_structure == expected_structure
 
+
+@disable_translation
+def test_repo_translator_exclude_language_folders(tmp_path):
+    test_structure = {
+        "project-file.md": "content",
+        "project-folder.md": {
+            "readme.md": "explanations",
+        },
+        "fr": {
+            "project-file.md": "content",
+        },
+        "es": {
+            "project-file.md": "content",
+        },
+    }
+    expected_structure = {
+        'hashes.db' : '...binary...',
+        # Project files
+        "project-file.md": "content",
+        "project-folder.md": {
+            "readme.md": "explanations",
+        },
+        # Mixed with translation files
+        'fr': {
+            "project-file.md": "content",
+            "project-folder.md": {
+                "readme.md": "explanations",
+            },
+        },
+        'es': {
+            "project-file.md": "content",
+            "project-folder.md": {
+                "readme.md": "explanations",
+            },
+        },
+    }
+    source_folder = str(tmp_path)
+    dest_folder = str(tmp_path)
+    create_structure(source_folder, test_structure)
+
+    markdown_translator.config(
+                dest_lang=["fr", "es"],
+                )
+    repo = RepositoryTranslator(source_folder, dest_folder)
+    repo.update()
+
+    result_structure = convert_to_dict(dest_folder)
+    assert result_structure == expected_structure
+
 @disable_translation
 def test_repo_translator_mix_include_exclude_2lang(tmp_path):
     test_structure = {
@@ -374,8 +423,6 @@ def test_repo_translator_keep_clean(tmp_path):
         },
         'anotherfile.md': '# Title Outside Subfolder (updated)',
         'new_version2.md' : "`Usefull code`",
-    }
-    old_structure = {
         'fr': {
             'subfolder': {
                 'somefile.md': '# Titre de sous-dossier',
@@ -391,10 +438,19 @@ def test_repo_translator_keep_clean(tmp_path):
             },
             'anotherfile.md': '# Title Outside Subfolder',
             'old_version2.md' : "`Useless code`",
-        }
+        },
     }
+
     expected_structure = {
         'hashes.db' : '...binary...',
+        ## Project files
+        'subfolder': {
+            'somefile.md': '# Title in Subfolder (updated)',
+            'new_version.md' : 'Usefull paragraph',
+        },
+        'anotherfile.md': '# Title Outside Subfolder (updated)',
+        'new_version2.md' : "`Usefull code`",
+        ## Translation files
         'fr': {
             'subfolder': {
                 'somefile.md': '# Title in Subfolder (updated)',
@@ -412,10 +468,9 @@ def test_repo_translator_keep_clean(tmp_path):
             'new_version2.md' : "`Usefull code`",
         },
     }
-    source_folder = str(tmp_path / "source")
-    dest_folder = str(tmp_path / "destination")
+    source_folder = str(tmp_path)
+    dest_folder = str(tmp_path)
     create_structure(source_folder, test_structure)
-    create_structure(dest_folder, old_structure)
 
     markdown_translator.config(
                 dest_lang=["fr", "es"],
