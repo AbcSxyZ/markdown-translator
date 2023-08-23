@@ -258,6 +258,64 @@ def test_repo_translator_exclude(tmp_path):
     assert result_structure == expected_structure
 
 @disable_translation
+def test_repo_translator_mix_include_exclude_folders(tmp_path):
+    # Test of paths:
+    # - with and without the "." working dir
+    # - with a composed folder
+    # - With nested folders
+    test_structure = {
+        'subfolder': {
+            'somefile.md': '# Title in Subfolder',
+            'non-used-folder' : {
+                "non-usefull.md" : "Usefull information",
+            },
+            'data-folder': {
+                "data-subfolder" :{
+                    "data.json": "...",
+                },
+                "readme.md" : "data explanations",
+            },
+            'non-secret-folder' : {
+                "random-file": "This is content",
+                "secret-of-non-secret": {
+                    "passfile.md": "password192837465",
+                    },
+            }
+        },
+        'anotherfile.md': '# Title Outside Subfolder',
+    }
+    expected_structure = {
+        'hashes.db' : '...binary...',
+        'fr': {
+            'subfolder': {
+                'somefile.md': '# Title in Subfolder',
+                'non-secret-folder' : {
+                    "random-file": "This is content",
+                }
+            },
+            'anotherfile.md': '# Title Outside Subfolder',
+        }
+    }
+    source_folder = str(tmp_path / "source")
+    dest_folder = str(tmp_path / "destination")
+    create_structure(source_folder, test_structure)
+
+    markdown_translator.config(
+                dest_lang=["fr"],
+                include_files=["./subfolder/non-secret-folder/"],
+                exclude_files=[
+                    "data-folder",
+                    "subfolder/non-used-folder",
+                    "non-secret-folder/secret-of-non-secret",
+                    ],
+                )
+    repo = RepositoryTranslator(source_folder, dest_folder)
+    repo.update()
+
+    result_structure = convert_to_dict(dest_folder)
+    assert result_structure == expected_structure
+
+@disable_translation
 def test_repo_translator_mix_include_exclude_2lang(tmp_path):
     test_structure = {
         'subfolder': {

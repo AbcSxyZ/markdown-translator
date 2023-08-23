@@ -60,13 +60,26 @@ class RepositoryTranslator:
             tracked_files = {file.relative_to(folder) for file in tracked_files}
         return tracked_files
 
-    @staticmethod
-    def _valid_file(file):
+    def _valid_file(self, file):
         ## Verfiy/add folder exclusion
         ## TO ADD: Exclude language folders.
-        if not file.is_file() or file.name in config.EXCLUDE_FILES:
+        if not file.is_file() or self._contained(file, config.EXCLUDE_FILES):
             return False
-        return file.suffix == ".md" or file.name in config.INCLUDE_FILES
+        return file.suffix == ".md" or self._contained(file, config.INCLUDE_FILES)
+
+    @staticmethod
+    def _contained(filename, controlled_paths):
+        """
+        Verify if a filename match a file pattern of an include or exclude list,
+        controlling indistinctly files or folders.
+        """
+        filename_parts = filename.parts
+        for path in controlled_paths:
+            pattern = pathlib.Path(path).parts
+            for index in range(len(filename_parts)):
+                if pattern == filename_parts[index:index + len(pattern)]:
+                    return True
+        return False
 
     def _clean(self):
         """ Delete untracked files and folders from a previous version. """
