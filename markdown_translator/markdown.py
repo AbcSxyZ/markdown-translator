@@ -136,7 +136,8 @@ class Markdown:
         """ Explore and modify recursively all (nested) links of an entire ast. """
         for token in ast.children:
             if self._is_editable_link(token):
-                token.target = os.path.join("/" + extension, token.target[1:])
+                link_parts = (config.URLS_ROOT, extension, token.target[1:])
+                token.target = os.path.join(*link_parts)
 
             if hasattr(token, 'children'):
                 self._edit_ast_links(token, extension)

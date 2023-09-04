@@ -22,8 +22,10 @@ class Configuration:
 
         self.VERBOSE = True
         self.CODE_TRANSLATED = False
-        self.EDIT_LINKS = True
         self.KEEP_CLEAN = False
+
+        self.EDIT_LINKS = True
+        self.URLS_ROOT = "/"
 
         self.INCLUDE_FILES = []
         self.EXCLUDE_FILES = []
@@ -58,7 +60,7 @@ class Configuration:
         attribute = attribute.upper()
         if not hasattr(self, attribute):
             raise MarkdownTranslatorError(f"Unexisting configuration : {attribute}")
-            
+
         try:
             attribute_type = type(getattr(self, attribute))
             value = self._parse_value(value, attribute_type)

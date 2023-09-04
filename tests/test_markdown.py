@@ -1,8 +1,9 @@
+from datetime import datetime
+import json
 import pathlib
 import pytest
 from markdown_translator import Markdown, config, adapters
-from datetime import datetime
-import json
+from utils_tests import *
 
 # To test :
 # - diff of markdown, without any diff.
@@ -257,7 +258,8 @@ def test_markdown_with_multi_html(create_markdown_file):
     assert md.blocks.childrens == expected_blocks
     assert md.blocks.hashes == expected_hashes
 
-def test_markdown_link_edit(create_markdown_file):
+@disable_translation
+def test_markdown_link_edit():
     content = """
 First link, edited, [absolute path](/one/absolute/path).
 
@@ -271,11 +273,49 @@ Third link, non edited, [Wikipedia](https://www.wikipedia.org/).
         "d7f78cebfe47d371ecd51986fbb846e3": "Third link, non edited, [Wikipedia](https://www.wikipedia.org/)."
     }
 
-    markdown_file = create_markdown_file(content)
-    md = Markdown(filename=markdown_file)
-    md._edit_links("en")
-    assert md.blocks.childrens == expected_blocks
-    assert md.blocks.hashes == list(expected_blocks.keys())
+    config(urls_root="/", edit_links=True)
+
+    source_md = Markdown(text=content)
+    translation = source_md.translate("en")
+
+    assert translation.blocks.childrens == expected_blocks
+    assert translation.blocks.hashes == list(expected_blocks.keys())
+
+@disable_translation
+def test_markdown_link_edit_with_base():
+    content = """
+First link, edited, [absolute path](/one/absolute/path).
+    """
+    expected_blocks = {
+        "2e3282f35f34e831b0549516d9b3b6ab": "First link, edited, [absolute path](/edit-test/en/one/absolute/path).",
+    }
+
+    # Basic functionality test
+    config(urls_root="/edit-test", edit_links=True)
+    source_md = Markdown(text=content)
+    translation = source_md.translate("en")
+
+    assert translation.blocks.childrens == expected_blocks
+    assert translation.blocks.hashes == list(expected_blocks.keys())
+
+    # With ending slash
+    config(urls_root="/edit-test/")
+    source_md = Markdown(text=content)
+    translation = source_md.translate("en")
+
+    assert translation.blocks.childrens == expected_blocks
+    assert translation.blocks.hashes == list(expected_blocks.keys())
+
+    # Without slashes (breaking links, rely on the user)
+    expected_blocks = {
+        "2e3282f35f34e831b0549516d9b3b6ab": "First link, edited, [absolute path](edit-test/en/one/absolute/path).",
+    }
+    config(urls_root="edit-test")
+    source_md = Markdown(text=content)
+    translation = source_md.translate("en")
+
+    assert translation.blocks.childrens == expected_blocks
+    assert translation.blocks.hashes == list(expected_blocks.keys())
 
 def test_markdown_translate():
     content = "# An easy title"
