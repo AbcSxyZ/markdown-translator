@@ -1,17 +1,19 @@
-# Markdown Translator
-**[Development mode, prototype creation]**
+# Traducteur Markdown
 
-**Lang:** [EN](/README.md), [FR](/translations/fr)
+**\[Mode développement, création de prototype\]**
 
-Automatic translation for versioned Markdown files and repositories.
+**Lang :** [EN](/README.md), [FR](/translations/fr)
+
+Traduction automatique pour les fichiers Markdown versionnés et les dépôts.
 
 ## Installation
 
-Get an [API key from DeepL](https://support.deepl.com/hc/en-us/articles/360020695820-Authentication-Key) by creating an account.
+Obtenez une [clé API à partir de DeepL](https://support.deepl.com/hc/en-us/articles/360020695820-Authentication-Key) en créant un compte.
 
-The project use both Python and Node.Js, with dependencies for each language.
+Le projet utilise à la fois Python et Node.Js, avec des dépendances pour chaque langage.
 
-**Node.Js setup :**
+**Installation de Node.Js :**
+
 ```shell
 # Node installation
 sudo apt-get install nodejs npm
@@ -20,14 +22,16 @@ sudo apt-get install nodejs npm
 npm install turndown
 ```
 
-**Python setup :**
+**Installation de Python :**
+
 ```shell
 pip install requests mistletoe
 ```
 
-## Getting Started
+## Démarrage
 
-To translate a single Markdown file
+Pour traduire un seul fichier Markdown
+
 ```python
 import markdown_translator
 
@@ -44,7 +48,9 @@ translated_md = source_md.translate(lang_to="FR", lang_from="EN")
 translated_md.save("translated-text.md")
 print(translated_md)
 ```
-To update an existing translated file:
+
+Pour mettre à jour un fichier traduit existant :
+
 ```python
 # Require to enable versioning
 markdown_translator.config(versioning="sql")
@@ -59,7 +65,8 @@ new_version = Markdown(filename="update.md")
 translated_md.update(new_version, lang_to="FR", lang_from="EN")
 ```
 
-To manage translations of all Markdown files within a folder :
+Pour gérer les traductions de tous les fichiers Markdown dans un dossier :
+
 ```python
 import markdown_translator
 
@@ -76,19 +83,20 @@ repo = markdown_translator.RepositoryTranslator("src-folder", "dest-folder")
 repo.update()
 ```
 
-## Documentation
+## Documentation (en anglais)
 
-See [documentation](docs/README.md) for more details.
+Voir la [documentation](docs/README.md) pour plus de détails.
 
 ## Tests
 
-You need to install `pytest` and `decorator` pip packages in order to execute tests.
+Vous devez installer les paquets pip `pytest` et `decorator` afin d'exécuter les tests.
 
-API key is needed for some tests. You should configure a `translations.ini` file, see `translations.template.ini`.
+Une clé API est nécessaire pour certains tests. Vous devez configurer un fichier `translations.ini`, voir `translations.template.ini`.
+
 ```bash
 python -m pytest
 ```
 
-## License
+## Licence
 
-Project licensed under [GNU Affero General Public License](/LICENSE) (GNU AGPL).
+Projet sous licence [GNU Affero General Public License](/translations/fr/LICENSE) (GNU AGPL).
