@@ -317,6 +317,29 @@ First link, edited, [absolute path](/one/absolute/path).
     assert translation.blocks.childrens == expected_blocks
     assert translation.blocks.hashes == list(expected_blocks.keys())
 
+@disable_translation
+def test_markdown_link_edit_translation_folders():
+    content = """
+Home with [README.md](/README.md).
+
+To [english translation](/en/link).
+
+To specified [translation folder](/translations/en/link).
+    """
+    expected_blocks = {
+        "599e45983f8c2da2918f1c374dcc0417": "Home with [README.md](/README.md).",
+        "6542dd9bed14e5397866052a0bb5ccf9": "To [english translation](/en/link).",
+        "cd26f81e2360fe63a117a2ccec80dab0": "To specified [translation folder](/translations/en/link)."
+    }
+
+    config(urls_root="/translations", dest_lang=["en"], edit_links=True)
+
+    source_md = Markdown(text=content)
+    translation = source_md.translate("en")
+
+    assert translation.blocks.childrens == expected_blocks
+    assert translation.blocks.hashes == list(expected_blocks.keys())
+
 def test_markdown_translate():
     content = "# An easy title"
     expected_blocks = {

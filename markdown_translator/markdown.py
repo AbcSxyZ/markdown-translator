@@ -150,6 +150,16 @@ class Markdown:
 
         for exclude_url in config.EXCLUDE_URLS:
             if ast_token.target.startswith(exclude_url): return False
+
+        ## Avoid links to translations folders
+        if config.URLS_ROOT != "/":
+            if ast_token.target.startswith(config.URLS_ROOT): return False
+        # README.md could be used as home to the source language
+        if ast_token.target.startswith("/README.md"): return False
+
+        base_folder = ast_token.target.split("/")[1]
+        for lang in config.DEST_LANG:
+            if lang.lower() == base_folder.lower(): return False
         return True
 
     def is_updated(self):
